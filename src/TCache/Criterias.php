@@ -2,15 +2,13 @@
 
 namespace TCache;
 
-
 use TCache\Criterias\Criteria;
 
 class Criterias
 {
-    /** @var  TCache */
-    private $cache;
-    private $loaded = false;
-    /** @var Criteria[] */
+    /** @var TCache */
+    private $cache = null;
+
     private $list = [];
 
     function __construct($cache)
@@ -18,58 +16,61 @@ class Criterias
         $this->cache = $cache;
     }
 
-    private function load()
+
+    /**
+     * @param $name
+     * @param string $valuesType
+     * @param bool $tagsMode
+     * @param null $valuesAttribute
+     * @return Criteria
+     */
+    public function add($name, $valuesType = null, $tagsMode = false, $valuesAttribute = null)
     {
-        if ($this->loaded === false) {
-            foreach ($this->cache->getStorage()->getCriteriasList() as $nextCriteria) {
-                $this->list[$nextCriteria['sid']] = new Criteria($nextCriteria['sid'], $nextCriteria['class'], $this->cache);
-            }
-            $this->loaded = true;
+        if (is_null($valuesAttribute)) {
+            $valuesAttribute = $name;
         }
+
+        $valuesType = $this->cache->getCorrector()->getValidatedVType($valuesType);
+
+        if ($tagsMode !== true) {
+            $tagsMode = false;
+        }
+
+        /** @var Criteria $Criteria */
+        $Criteria = $this->cache->getServiceManager()->getCriteria();
+        $Criteria->setName($name);
+        $Criteria->setTagsMode($tagsMode);
+        $Criteria->setValuesType($valuesType);
+        $Criteria->setValuesAttribute($valuesAttribute);
+        $this->list[$name] = $Criteria;
+
+        return $this->list[$name];
     }
 
     /**
-     * @param $criteria_id
-     * @param string $WarmupperClass
-     * @return Criteria
+     * @return Criteria[]
      */
-    public function add($criteria_id, $WarmupperClass = "default")
-    {
-        $this->load();
-        if (!isset($this->list[$criteria_id])) {
-            $criteria = $this->cache->getStorage()->createCriteria($criteria_id, $WarmupperClass);
-            $this->list[$criteria['sid']] = new Criteria($criteria['sid'], $criteria['class'], $this->cache);
-        }
-        return $this->list[$criteria_id];
-    }
-
     public function getAll()
     {
-        $this->load();
         return $this->list;
     }
 
-    public function get($criteria_id)
+    /**
+     * @param $name
+     * @return Criteria
+     */
+    public function get($name)
     {
-        $this->load();
-        return isset($this->list[$criteria_id]) ? $this->list[$criteria_id] : null;
+        return isset($this->list[$name]) ? $this->list[$name] : null;
     }
 
-    public function drop($criteria_id)
+    /**
+     * @param $name
+     * @return $this
+     */
+    public function remove($name)
     {
-        $this->load();
-        if (isset($this->list[$criteria_id])) {
-            $this->list[$criteria_id]->getValues()->dropAll();
-            unset($this->list[$criteria_id]);
-            $this->cache->getStorage()->dropCriteria($criteria_id);
-        }
-    }
-
-    public function dropAll()
-    {
-        $this->load();
-        foreach ($this->list as $nextCriteria) {
-            $this->drop($nextCriteria->getSid());
-        }
+        unset($this->list[$name]);
+        return $this;
     }
 }

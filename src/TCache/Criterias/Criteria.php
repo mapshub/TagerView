@@ -2,71 +2,117 @@
 
 namespace TCache\Criterias;
 
-
-use TCache\Criterias\Criteria\Values;
+use TCache\Criterias;
+use TCache\Query;
 use TCache\TCache;
 
 class Criteria
 {
-    /** @var  TCache */
-    private $cache;
+    /** @var TCache */
+    private $cache = null;
 
-    private $sid;
-    private $valuesBuilderClass;
+    private $name = null;
+    private $valuesAttribute = null;
+    private $valuesType = null;
+    private $tagsMode = false;
 
-    private $values;
-    private $valuesBuilder;
-
-    function __construct($sid, $class, $cache)
+    function __construct($cache)
     {
-        $this->sid = $sid;
-        $this->valuesBuilderClass = $class;
         $this->cache = $cache;
     }
 
-    public function getValues()
+    /**
+     * @param $name
+     * @return $this
+     */
+    public function setName($name)
     {
-        if (is_null($this->values)) {
-            $this->values = new Values($this);
-        }
-        return $this->values;
+        $this->name = $name;
+        return $this;
     }
 
     /**
-     * @return \TCache\Criterias\Criteria\ValuesBuilder
+     * @param bool $tagsMode
+     * @return $this
      */
-    public function getValuesBuilder()
+    public function setTagsMode($tagsMode)
     {
-        if (is_null($this->valuesBuilder)) {
-            $builderClass = $this->getValuesBuilderClass();
-            $this->valuesBuilder = new $builderClass($this);
-        }
-        return $this->valuesBuilder;
-    }
-
-    public function setValuesBuilderClass($valuesBuilderClass)
-    {
-        $this->valuesBuilderClass = $valuesBuilderClass;
-    }
-
-    public function getValuesBuilderClass()
-    {
-        if ($this->valuesBuilderClass == "default") {
-            $this->valuesBuilderClass = 'TCache\Criterias\Criteria\ValuesBuilder';
-        }
-        return $this->valuesBuilderClass;
+        $this->tagsMode = !!$tagsMode;
+        return $this;
     }
 
     /**
-     * @return TCache
+     * @param $valuesAttribute
+     * @return $this
      */
-    public function getCache()
+    public function setValuesAttribute($valuesAttribute)
     {
-        return $this->cache;
+        $this->valuesAttribute = $valuesAttribute;
+        return $this;
     }
 
-    public function getSid()
+    /**
+     * @param $valuesType
+     * @return $this
+     */
+    public function setValuesType($valuesType)
     {
-        return $this->sid;
+        $this->valuesType = $valuesType;
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return boolean
+     */
+    public function getTagsMode()
+    {
+        return $this->tagsMode;
+    }
+
+    /**
+     * @return string
+     */
+    public function getValuesAttribute()
+    {
+        return $this->valuesAttribute;
+    }
+
+    /**
+     * @return string
+     */
+    public function getValuesType()
+    {
+        return $this->valuesType;
+    }
+
+    public function getCorrectValue($sourceValue)
+    {
+        return $this->cache->getCorrector()->getCorrectValue($sourceValue, $this->getValuesType());
+    }
+
+    /**
+     * @param $query
+     * @return array|null
+     */
+    public function getDistinctValues($query)
+    {
+        return $this->cache->getStorage()->getDistinctValues($this->getName(), $query, $this->getTagsMode());
+    }
+
+    /**
+     * @param $query
+     * @return array|null
+     */
+    public function getMinMaxValues($query)
+    {
+        return $this->cache->getStorage()->getMinMaxValues($this->getName(), $query, $this->getTagsMode());
     }
 }

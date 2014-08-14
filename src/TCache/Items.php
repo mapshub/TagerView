@@ -2,60 +2,89 @@
 
 namespace TCache;
 
-use TCache\Criterias\Criteria;
+use TCache\Items\Item;
 
 class Items
 {
 
-    /** @var  TCache */
-    private $cache;
+    /** @var TCache */
+    private $cache = null;
 
-    function __construct($cache)
+    function __construct(TCache $cache)
     {
         $this->cache = $cache;
     }
 
     /**
-     * @return \TCache\TCache
+     * @param null $data
+     * @return Item
      */
-    public function getCache()
+    public function createItem($data = null)
     {
-        return $this->cache;
-    }
-
-    public function add($id, $attributes)
-    {
-        foreach ($this->getCache()->getCriterias()->getAll() as $nextCriteria) {
-            $arrValue = $nextCriteria->getValuesBuilder()->getValueByItem($attributes);
-            if (!is_null($arrValue)) {
-                $nextCriteria->getValues()->add($arrValue['id'], $arrValue['text']);
-            }
-        }
-        $this->getCache()->getStorage()->addItem($id, $attributes);
-    }
-
-    public function get($id)
-    {
-        $item = null;
-        foreach ($this->find([], [$id]) as $next) {
-            $item = $next;
+        $item = $this->cache->getServiceManager()->getEmptyItem();
+        if (is_array($data) && !empty($data)) {
+            $item->setData($data);
         }
         return $item;
     }
 
-    public function find($values = [], $ids = [])
+    /**
+     * @param $item
+     * @return null|Item
+     */
+    public function saveItem($item)
     {
-        return $this->getCache()->getStorage()->findItems($values, $ids);
+        return $this->cache->getStorage()->saveItem($item);
     }
 
-    public function drop($values = [], $ids = [])
+    /**
+     * @param $item
+     * @return bool
+     */
+    public function removeItem($item)
     {
-        $this->getCache()->getStorage()->dropItems($values, $ids);
+        return $this->cache->getStorage()->removeItem($item);
     }
 
-    public function count($values = [], $ids = [])
+    /**
+     * @param Query $query
+     * @return int
+     */
+    public function getCount($query)
     {
-        return $this->getCache()->getStorage()->countItems($values, $ids);
+        return $this->cache->getStorage()->getItemsCount($query);
     }
 
+    /**
+     * @param Query $query
+     * @return array
+     */
+    public function getQueryResults($query)
+    {
+        return $this->cache->getStorage()->getItems($query);
+    }
+
+    /**
+     * @param $field
+     * @param $query
+     * @param bool $unwind <p>if target field is array - set true</p>
+     * @return array|null
+     */
+    public function getDistinctValues($field, $query, $unwind = false)
+    {
+        return $this->cache->getStorage()->getDistinctValues($field, $query, $unwind);
+    }
+
+    public function getMinMaxValues($field, $query, $unwind = false)
+    {
+        return $this->cache->getStorage()->getMinMaxValues($field, $query, $unwind);
+    }
+
+    /**
+     * @return Query
+     */
+    public function createQuery()
+    {
+        return $this->cache->getStorage()->createQuery();
+    }
 }

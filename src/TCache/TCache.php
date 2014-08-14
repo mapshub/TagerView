@@ -2,83 +2,52 @@
 
 namespace TCache;
 
-
-use TCache\Storage\AbstractStorage;
+use TCache\Storage\MongoStorage;
+use TCache\Utils\Corrector;
+use TCache\Utils\Hashes;
 
 class TCache
 {
-    private $name;
-    /** @var  Criterias */
-    private $criterias;
-    /** @var  Items */
-    private $items;
-    /** @var  AbstractStorage */
-    private $storage;
-    private $jobs;
+    /** @var ServiceManager $serviceManager */
+    private $serviceManager = null;
 
-    function __construct($name = null)
+    function __construct()
     {
-        $this->name = $name;
+        $this->serviceManager = new ServiceManager($this);
+        $this->serviceManager->setCriteriasClass('\TCache\Criterias');
+        $this->serviceManager->setCriteriaClass('\TCache\Criterias\Criteria');
+        $this->serviceManager->setStorageClass('\TCache\Storage\MongoStorage');
+        $this->serviceManager->setItemsClass('\TCache\Items');
+        $this->serviceManager->setItemClass('\TCache\Items\Item');
+        $this->serviceManager->setHashesClass('\TCache\Utils\Hashes');
+        $this->serviceManager->setCorrectorClass('\TCache\Utils\Corrector');
+        $this->serviceManager->setValidatorClass('\TCache\Utils\Validator');
+        $this->serviceManager->setQueryClass('\TCache\Query');
+        $this->serviceManager->setQueryFieldClass('\TCache\Query\Field');
     }
 
     /**
-     * @param $name
-     * @return $this
+     * @return \TCache\ServiceManager
      */
-    public function setName($name)
+    public function getServiceManager()
     {
-        $this->criterias = null;
-        $this->items = null;
-        $this->jobs = null;
-        $this->name = $name;
-        if (!is_null($this->getStorage())) {
-            $this->getStorage()->setCache($this);
-        }
-        return $this;
+        return $this->serviceManager;
     }
 
-    public function getName()
-    {
-        return $this->name;
-    }
-
+    /**
+     * @return \TCache\Criterias
+     */
     public function getCriterias()
     {
-        if (is_null($this->criterias)) {
-            $this->criterias = new Criterias($this);
-        }
-        return $this->criterias;
+        return $this->serviceManager->getCriterias();
     }
 
     /**
-     * @param \TCache\Storage\AbstractStorage $storage
-     */
-    public function setStorage($storage)
-    {
-        $this->criterias = null;
-        $this->items = null;
-        $this->jobs = null;
-        $storage->setCache($this);
-        $this->storage = $storage;
-    }
-
-    /**
-     * @return \TCache\Storage\AbstractStorage
+     * @return MongoStorage
      */
     public function getStorage()
     {
-        return $this->storage;
-    }
-
-    /**
-     * @return Jobs
-     */
-    public function getJobs()
-    {
-        if (is_null($this->jobs)) {
-            $this->jobs = new Jobs($this);
-        }
-        return $this->jobs;
+        return $this->serviceManager->getStorage();
     }
 
     /**
@@ -86,16 +55,45 @@ class TCache
      */
     public function getItems()
     {
-        if (is_null($this->items)) {
-            $this->items = new Items($this);
-        }
-        return $this->items;
+        return $this->serviceManager->getItems();
     }
 
-    public function dropAll()
+    /**
+     * @return Hashes
+     */
+    public function getHashes()
     {
-        $this->getCriterias()->dropAll();
-        $this->getItems()->drop();
-        $this->getJobs()->dropAll();
+        return $this->serviceManager->getHashesUtil();
     }
+
+    /**
+     * @return Corrector
+     */
+    public function getCorrector()
+    {
+        return $this->serviceManager->getCorrectorUtil();
+    }
+
+    /**
+     * @return Utils\Validator
+     */
+    public function getValidator()
+    {
+        return $this->getServiceManager()->getValidatorUtil();
+    }
+
+    /**
+     * @return Query
+     */
+    public function createQuery()
+    {
+        return $this->getServiceManager()->getEmptyQuery();
+    }
+
+    public function getDaemon()
+    {
+        //TODO: getDaemon()
+    }
+
+
 }

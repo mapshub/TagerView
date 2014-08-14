@@ -1,8 +1,8 @@
 {
-    "name": "mapshub/t-cache",
-    "description": "Library that provides caching table data for fast search and indexing",
-    "keywords": ["cache", "caching", "storage", "mongo", "fast search"],
-    "homepage": "http://github.com/mapshub/TCache",
+    "name": "Tager/Cache",
+    "description": "Library that provides data aggregation and indexing with mongodb and fast search with aggregation framework usage",
+    "keywords": ["cache", "caching", "storage", "mongo", "fast", "search", "indexing", "aggregation", "aggregate"],
+    "homepage": "https://github.com/mapshub/Tager",
     "type": "library",
     "license": "MIT",
     "authors": [

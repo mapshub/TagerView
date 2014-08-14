@@ -2,351 +2,150 @@
 
 namespace TCacheTest;
 
-use TCache\Criterias;
-use TCache\Storage\MongoDB\MongoStorage;
 use TCache\TCache;
 
 class TCacheTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @return TCache
-     */
-    public function getCache()
+    private static $data = [];
+
+    private function getData()
     {
-        $storage = new MongoStorage();
-        $storage->setDbName("TCacheTest");
+        if (empty(self::$data)) {
+            $dom = new \DOMDocument('1.0', 'utf-8');
+            $dom->load(__DIR__ . "/exportsaloncars.xml");
+            $xpath = new \DOMXPath($dom);
+            $offers = $xpath->query("//offer");
+            for ($i = 0; $i < $offers->length; $i++) {
+                $offer = $offers->item($i);
 
-        $tcache = new TCache("test_2");
-        $tcache->setStorage($storage);
+                $item = [];
 
-        return $tcache;
+                $params = $xpath->query("*", $offer);
+                for ($j = 0; $j < $params->length; $j++) {
+                    $param = $params->item($j);
+
+                    $item[$param->nodeName] = $param->nodeValue;
+                }
+
+                if (!empty($item)) {
+                    self::$data[] = $item;
+                }
+            }
+
+            //self::$data = array_slice(self::$data, 0, 10);
+        }
+        return self::$data;
     }
 
-    public function testName()
+    public function testInstances()
     {
-        $tcache = new TCache("test_1");
-        $this->assertEquals("test_1", $tcache->getName());
-
-        $tcache->setName("test");
-        $this->assertEquals("test", $tcache->getName());
-    }
-
-    public function testStorage()
-    {
-        $storage = new MongoStorage();
-        $storage->setDbName("TCacheTest");
-        $this->assertInstanceOf("MongoClient", $storage->getConnection());
-        $this->assertInstanceOf("MongoDB", $storage->getDb());
-
         $tcache = new TCache();
-        $tcache->setStorage($storage);
-        $this->assertEquals($storage, $tcache->getStorage());
+        $this->assertInstanceOf('TCache\Storage\MongoStorage', $tcache->getStorage());
+        $this->assertInstanceOf('TCache\Criterias', $tcache->getCriterias());
+        $this->assertInstanceOf('TCache\Items', $tcache->getItems());
+        $this->assertInstanceOf('TCache\Criterias\Criteria', $tcache->getServiceManager()->getCriteria());
+        $this->assertInstanceOf('TCache\Items\Item', $tcache->getServiceManager()->getEmptyItem());
+        $this->assertInstanceOf('TCache\Utils\Hashes', $tcache->getServiceManager()->getHashesUtil());
+        $this->assertInstanceOf('TCache\Utils\Corrector', $tcache->getServiceManager()->getCorrectorUtil());
+        $this->assertInstanceOf('TCache\Utils\Validator', $tcache->getServiceManager()->getValidatorUtil());
+        $this->assertInstanceOf('TCache\Query', $tcache->getServiceManager()->getEmptyQuery());
+        $this->assertInstanceOf('TCache\Query\Field', $tcache->getServiceManager()->getEmptyQueryField());
     }
 
-    public function testCriterias()
+    public function testCriteriaHash()
     {
-        $tcache = new TCache("test_2");
+        $tcache = new TCache("TCacheTest", "ver2_testLoad"); //TODO: переделать
+        $tcache->getCriterias()->add("name");
+        $tcache->getCriterias()->add("age");
+        $tcache->getCriterias()->add("sex");
+        $hash_1 = $tcache->getHashes()->getConfigHash();
 
-        $storage = new MongoStorage();
-        $storage->setDbName("TCacheTest");
+        $tcache = new TCache("TCacheTest", "ver2_testLoad"); //TODO: переделать
+        $tcache->getCriterias()->add("age");
+        $tcache->getCriterias()->add("sex");
+        $tcache->getCriterias()->add("name");
+        $hash_2 = $tcache->getHashes()->getConfigHash();
 
-        $tcache->setStorage($storage);
-        $criterias = $tcache->getCriterias();
-        $this->assertInstanceOf('TCache\Criterias', $criterias);
+        $this->assertEquals($hash_1, $hash_2);
     }
 
-    public function testCriteriasAdd()
+    public function testFillItems_1()
     {
-        $tcache = $this->getCache()->setName("test_4");
+        $tcache = new TCache();
+        $storage = $tcache->getStorage();
+        $storage->setDbName("TCacheTest")->setItemsCollectionName("TCacheTest_testFillItems_1");
 
-        $criterias = $tcache->getCriterias();
-        $criterias->add("sex");
-        $criterias->add("age");
-        $list = $criterias->getAll();
-        $this->assertEquals(2, count($list));
+        foreach ($this->getData() as $arrNextData) {
+            $tcache->getItems()->saveItem(
+                $tcache->getItems()->createItem($arrNextData)
+            );
+        }
+        $tcache->getStorage()->dropDb();
     }
 
-    public function testCriteriaLoad()
+    public function testFillItems_2()
     {
-        $tcache = $this->getCache()->setName("test_5");
+        $tcache = new TCache();
+        $tcache->getCriterias()->add("Brands")->setTagsMode(true);
+        $tcache->getCriterias()->add("Models")->setTagsMode(true);
+        $tcache->getCriterias()->add("Salons")->setTagsMode(true);
 
-        $criterias = $tcache->getCriterias();
-        $criterias->add("sex");
-        $criterias->add("age");
-        $criterias->add("name");
+        $storage = $tcache->getStorage();
+        $storage->setDbName("TCacheTest")->setItemsCollectionName("TCacheTest_testFillItems_2");
 
-        $tcache = $this->getCache()->setName("test_5");
+        $dataList = $this->getData();
 
-        $loaded = $tcache->getCriterias()->getAll();
-        $this->assertEquals(3, count($loaded));
+        $mess = "";
 
-    }
-
-    public function testGetCriteria()
-    {
-        $guertsy = $this->getCache()->setName("test_6")->getCriterias()->add("guertsy");
-        $guertsy->getCache()->getJobs(); //для одинаковости далее
-        $guertsy_get = $this->getCache()->setName("test_6")->getCriterias()->get("guertsy");
-        $guertsy_get->getCache()->getJobs(); //для одинаковости далее
-        $this->assertEquals($guertsy, $guertsy_get);
-    }
-
-    public function testDropCriteria()
-    {
-        $c = $this->getCache()->setName("test_7")->getCriterias();
-        $c->add("guertsy");
-        $c->add("guertsy2");
-        $c->add("guertsy3");
-        $this->assertEquals(3, count($this->getCache()->setName("test_7")->getCriterias()->getAll()));
-
-        $this->getCache()->setName("test_7")->getCriterias()->drop("guertsy");
-        $this->assertEquals(2, count($this->getCache()->setName("test_7")->getCriterias()->getAll()));
-
-        $this->getCache()->setName("test_7")->getCriterias()->drop("guertsy2");
-        $this->getCache()->setName("test_7")->getCriterias()->drop("guertsy3");
-        $this->assertEquals(0, count($this->getCache()->setName("test_7")->getCriterias()->getAll()));
-    }
-
-    public function testGetValues()
-    {
-        $values = $this->getCache()->setName("test_8")->getCriterias()->add("sex")->getValues();
-        $this->assertInstanceOf('TCache\Criterias\Criteria\Values', $values);
-        $this->assertEquals("sex", $values->getCriteria()->getSid());
-    }
-
-    public function testCreateValue()
-    {
-        $values = $this->getCache()->setName("test_9")->getCriterias()->add("sex")->getValues()->dropAll();
-        $this->assertEquals(0, count($values->getAll()));
-        $male = $values->add("M", "Male");
-        $female = $values->add("F", "Female");
-
-        $this->assertEquals(2, count($this->getCache()->setName("test_9")->getCriterias()->add("sex")->getValues()->getAll()));
-        $sex = $this->getCache()->setName("test_9")->getCriterias()->add("sex");
-        $sex->getValuesBuilder();
-        $values = $sex->getValues();
-
-        $male_new = $values->get('M');
-        $male_new->getCriteria()->getCache()->getJobs(); //для одинаковости далее
-        $female_new = $values->get('F');
-        $female_new->getCriteria()->getCache()->getJobs(); //для одинаковости далее
-
-        $this->assertEquals($male->getSid(), $male_new->getSid());
-        $this->assertEquals($male->getText(), $male_new->getText());
-        $this->assertEquals($female->getSid(), $female_new->getSid());
-        $this->assertEquals($female->getText(), $female_new->getText());
-    }
-
-    public function testDropValues()
-    {
-        $values = $this->getCache()->setName("test_10")->getCriterias()->add("sex")->getValues()->dropAll();
-        $values->add("unknown", "unknown");
-        $this->assertEquals(1, count($values->getAll()));
-        $values->drop("unknown");
-
-        $values = $this->getCache()->setName("test_10")->getCriterias()->add("sex")->getValues();
-        $this->assertEquals(0, count($values->getAll()));
-    }
-
-    public function testItems()
-    {
-        $cache = $this->getCache()->setName("test_11");
-        $items = $cache->getItems();
-        $this->assertInstanceOf('TCache\Items', $items);
-
-        $items->add('m101', ['sex' => 'M', 'name' => 'Jo']);
-        $items->add('m102', ['sex' => 'M', 'name' => 'Li']);
-        $items->add('m103', ['sex' => 'F', 'name' => 'Mae']);
-
-        $cache = $this->getCache()->setName("test_11");
-        $items = $cache->getItems();
-        $this->assertEquals(3, $items->count());
-
-    }
-
-    public function testReplaceItems()
-    {
-        $cache = $this->getCache()->setName("test_12");
-        $items = $cache->getItems();
-        $this->assertInstanceOf('TCache\Items', $items);
-
-        $items->add('m101', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo']);
-        $this->assertEquals('Jo', $items->get('m101')['attr']['name']);
-
-        $items->add('m101', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Li']);
-        $this->assertEquals('Li', $items->get('m101')['attr']['name']);
-
-        $items->add('m101', ['sex' => 'F', 'sex_text' => 'Female', 'name' => 'Mae']);
-        $this->assertEquals('Mae', $items->get('m101')['attr']['name']);
-    }
-
-    public function testBuildValuesByItems()
-    {
-        $cache = $this->getCache()->setName("test_13");
-        $items = $cache->getItems();
-        $values = $cache->getCriterias()->add("sex")->getValues()->dropAll();
-        $this->assertEquals(0, count($values->getAll()));
-        $items->add('m101', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo']);
-        $items->add('m102', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Li']);
-        $items->add('m103', ['sex' => 'F', 'sex_text' => 'Female', 'name' => 'Mae']);
-
-        $values = $cache->getCriterias()->add("sex")->getValues();
-        $this->assertEquals("Male", $values->get("M")->getText());
-        $this->assertEquals("Female", $values->get("F")->getText());
-        $this->assertEquals(2, count($values->getAll()));
-    }
-
-    public function testGetItemsByValues()
-    {
-        $cache = $this->getCache()->setName("test_15");
-        $items = $cache->getItems();
-        $cache->getCriterias()->add("country")->getValues()->dropAll();
-        $cache->getCriterias()->add("sex")->getValues()->dropAll();
-        $items->add('m101', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china']);
-        $items->add('m102', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Li', 'country' => 'china']);
-        $items->add('m103', ['sex' => 'F', 'sex_text' => 'Female', 'name' => 'Mae', 'country' => 'hong kong']);
-
-        $sexes = $cache->getCriterias()->add("sex")->getValues();
-        $males = $sexes->get("M");
-        $females = $sexes->get("F");
-        $countries = $cache->getCriterias()->add("country")->getValues();
-        $china = $countries->get("china");
-        $hongkong = $countries->get("hong kong");
-
-        $this->assertEquals(2, $males->getCount());
-        $this->assertEquals(0, $males->getCount([$hongkong]));
-
-        $this->assertEquals(1, $hongkong->getCount());
-        $this->assertEquals(0, $hongkong->getCount([$males]));
-
-        $this->assertEquals(0, $items->count([$females, $china]));
-        $this->assertEquals(2, $items->count([$males, $china]));
-
-        $items = $this->getCache()->setName("test_15")->getItems();
-        $items->drop([$china, $males]);
-
-        $this->assertEquals(1, $items->count());
-    }
-
-    public function testRebuildValues()
-    {
-        $cache = $this->getCache()->setName("test_15");
-        $cache->dropAll();
-        $cache->getItems()->drop();
-        $cache->getCriterias()->dropAll();
-
-        $cache = $this->getCache()->setName("test_15");
-        $items = $cache->getItems();
-        $this->assertEquals(0, $items->count());
-        $this->assertEquals(0, count($cache->getCriterias()->getAll()));
-        $items->add('m101', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china']);
-        $items->add('m102', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Li', 'country' => 'china']);
-        $items->add('m103', ['sex' => 'F', 'sex_text' => 'Female', 'name' => 'Mae', 'country' => 'hong kong']);
-
-        $cache = $this->getCache()->setName("test_15");
-        $sex = $cache->getCriterias()->add("sex");
-
-        $this->assertEquals(0, count($sex->getValues()->getAll()));
-
-        $cache->getJobs()->makeAll();
-        $this->assertEquals(2, count($sex->getValues()->getAll()));
-    }
-
-    public function testDropCriteriaInItems()
-    {
-        $cache = $this->getCache()->setName("test_16");
-        $cache->dropAll();
-        $cache->getCriterias()->add("sex");
-
-        $items = $cache->getItems();
-        $items->add('m101', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china']);
-        $items->add('m102', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Li', 'country' => 'china']);
-        $items->add('m103', ['sex' => 'F', 'sex_text' => 'Female', 'name' => 'Mae', 'country' => 'hong kong']);
-
-        foreach ($items->find() as $item) {
-            $this->assertArrayHasKey("sex", $item);
+        foreach ($dataList as $arrNextData) {
+            $tcache->getItems()->saveItem(
+                $tcache->getItems()->createItem($arrNextData)
+            );
         }
 
-        $cache->getCriterias()->drop("sex");
-        $cache->getJobs()->makeAll();
+        $selectAll = $tcache->getItems()->createQuery();
 
-        foreach ($items->find() as $item) {
-            $this->assertArrayNotHasKey("sex", $item);
-        }
-    }
-
-    public function testGetDistinctCriteriaValuesWithQuery()
-    {
-        $cache = $this->getCache()->setName("test_17");
-        $cache->dropAll();
-        $sex = $cache->getCriterias()->add("sex");
-        $name = $cache->getCriterias()->add("name");
-        $name = $cache->getCriterias()->add("count");
-
-        $items = $cache->getItems();
-        $items->add('m101', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china', 'count' => 0.1 + 0.7]);
-        $items->add('m101-1', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china', 'count' => ceil(2458 / 100) / 10]);
-        $items->add('m101-2', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china', 'count' => (0.1 + 0.7) * 10]);
-        $items->add('m102', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Li', 'country' => 'china', 'count' => 10 / 300000000]);
-        $items->add('m103', ['sex' => 'F', 'sex_text' => 'Female', 'name' => 'Mae', 'country' => 'hong kong', 'count' => '']);
+        $this->assertEquals(count($dataList), $tcache->getItems()->getCount($selectAll));
 
 
-        $cache->getJobs()->makeAll();
+        //изменили конфиг поэтому в БД данные опять добавятся - ненужные должен удалить Демон
+        $tcache->getCriterias()->add("Bodies");
 
-        foreach ($items->find() as $item) {
-            //print_r($item);
+        foreach ($dataList as $arrNextData) {
+            $tcache->getItems()->saveItem(
+                $tcache->getItems()->createItem($arrNextData)
+            );
         }
 
-        $male = $sex->getValues()->get('M');
-        $namesList = $name->getValues()->aggregateBy();
+        $this->assertEquals(count($dataList), $tcache->getItems()->getCount($selectAll));
 
-        print_r($namesList);
+        //In sysmode count = N*2
+        $query = $tcache->getItems()->createQuery();
+        $query->setSystemUserQuery(true);
+        $this->assertEquals(count($dataList) * 2, $tcache->getItems()->getCount($query));
 
-        $namesList = $name->getValues()->aggregateBy([$male]);
-
-        print_r($namesList);
+        $tcache->getStorage()->dropDb();
     }
 
-    public function testCustomWarmup()
+
+    public function testFillItems_3()
     {
-        $cache = $this->getCache()->setName("test_18");
-        $cache->dropAll();
-        $sex = $cache->getCriterias()->add("sex");
-        $name = $cache->getCriterias()->add("name");
-        $count = $cache->getCriterias()->add("count", '\TCacheTest\CountValueBuilder');
+        $tcache = new TCache();
+        $tcache->getCriterias()->add("Brands")->setTagsMode(true);
+        $tcache->getCriterias()->add("Models")->setTagsMode(true);
+        $tcache->getCriterias()->add("Salons")->setTagsMode(true);
 
-        $items = $cache->getItems();
-        $items->add('m101', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china', 'count' => 0.1 + 0.7]);
-        $items->add('m101-1', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china', 'count' => ceil(2458 / 100) / 10]);
-        $items->add('m101-2', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Jo', 'country' => 'china', 'count' => (0.1 + 0.7) * 10]);
-        $items->add('m102', ['sex' => 'M', 'sex_text' => 'Male', 'name' => 'Li', 'country' => 'china', 'count' => 10 / 300000000]);
-        $items->add('m103', ['sex' => 'F', 'sex_text' => 'Female', 'name' => 'Mae', 'country' => 'hong kong', 'count' => "791,900003"]);
+        $storage = $tcache->getStorage();
+        $storage->setDbName("TCacheTest")->setItemsCollectionName("TCacheTest_testFillItems_3");
 
+        $dataList = $this->getData();
 
-        $cache->getJobs()->makeAll();
-
-        foreach ($count->getValues()->getAll() as $value) {
-            var_dump([$value->getSid(), $value->getText()]);
+        foreach ($dataList as $arrNextData) {
+            $tcache->getItems()->saveItem(
+                $tcache->getItems()->createItem($arrNextData)
+            );
         }
 
-    }
-
-    public function testArrayValuesBase()
-    {
-        $cache = $this->getCache()->setName("test_19_array");
-        $cache->dropAll();
-
-        $producers = $cache->getCriterias()->add("producers");
-        $producers->setArrayType(true);
-    }
-
-
-    public function testDropDatabase()
-    {
-        $cache = $this->getCache();
-
-        $db = $cache->getStorage()->getDb();
-        $db->drop();
+        $tcache->getStorage()->dropDb();
     }
 }
- 
