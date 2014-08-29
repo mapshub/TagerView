@@ -2,8 +2,8 @@
 
 namespace TCacheTest;
 
-use TCache\TCache;
-use TCache\Utils\Corrector;
+use Tager\View;
+use Tager\Helpers\Corrector;
 
 class ItemsTest extends \PHPUnit_Framework_TestCase
 {
@@ -20,20 +20,22 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
     public function testFindItems()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("ItemsTest_testFindItems");
 
-        $items = $tcache->getItems();
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("ItemsTest_testFindItems"));
+
+
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
@@ -44,37 +46,42 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
         $subquery->add('f7')->all(['C']);
         $subquery->add('f7')->all(['A', 'B']);
 
+
+
         $query->setLimit(1000);
-        $this->assertEquals(5, count($items->getQueryResults($query)));
+
+        $result = $items->getItems($query);
+
+        $this->assertEquals(5, count($result));
 
         $query->setLimit(1);
-        $this->assertEquals(1, count($items->getQueryResults($query)));
+        $this->assertEquals(1, count($items->getItems($query)));
 
         $subquery->setModeOR(false);
 
-        $c = count($items->getQueryResults($query));
+        $c = count($items->getItems($query));
         $this->assertEquals(1, $c);
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
     public function testFindWithSort()
     {
 
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("ItemsTest_testFindWithSort");
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("ItemsTest_testFindWithSort"));
 
-        $items = $tcache->getItems();
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
@@ -95,32 +102,32 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
         $query->setLimit(1000);
 
         $actual = [];
-        foreach ($items->getQueryResults($query) as $next) {
+        foreach ($items->getItems($query) as $next) {
             $actual[] = $items->createItem()->load($next)->getData();
         }
 
         $this->assertEquals($expected, $actual);
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
     public function testDistinctWithQueryLimit()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
-        $tcache->getCriterias()->add("f8")->setValuesType(Corrector::VTYPE_STRING);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f8")->setValuesType(Corrector::VTYPE_STRING);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("ItemsTest_testDistinctWithQueryLimit");
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("ItemsTest_testDistinctWithQueryLimit"));
 
-        $items = $tcache->getItems();
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
@@ -141,26 +148,27 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($expected, $actual);
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
     public function testMinMaxWithQuery()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_BOOL);
-        $tcache->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
-        $tcache->getCriterias()->add("f8")->setValuesType(Corrector::VTYPE_STRING);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_BOOL);
+        $tcache->scheme()->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f8")->setValuesType(Corrector::VTYPE_STRING);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("ItemsTest_testMinMaxWithQuery");
 
-        $items = $tcache->getItems();
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("ItemsTest_testMinMaxWithQuery"));
+
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
@@ -169,91 +177,95 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
         $actual = $items->getMinMaxValues('f1', $query);
         $expected = ['min' => 0, 'max' => 7];
         $this->assertEquals($expected, $actual);
-        $this->assertEquals($expected, $tcache->getCriterias()->get("f1")->getMinMaxValues($query));
+        $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f1")->getMinMaxValues($query));
 
         $query->add('f6')->eq(true);
         $actual = $items->getMinMaxValues('f1', $query);
         $expected = ['min' => 0, 'max' => 5];
         $this->assertEquals($expected, $actual);
-        $this->assertEquals($expected, $tcache->getCriterias()->get("f1")->getMinMaxValues($query));
+        $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f1")->getMinMaxValues($query));
 
         $query = $items->createQuery();
         $actual = $items->getMinMaxValues('f6', $query);
         $expected = ['min' => false, 'max' => true];
         $this->assertEquals($expected, $actual);
-        $this->assertEquals($expected, $tcache->getCriterias()->get("f6")->getMinMaxValues($query));
+        $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f6")->getMinMaxValues($query));
 
         $query = $items->createQuery();
         $actual = $items->getMinMaxValues('f7', $query, true);
         $expected = ['min' => "A", 'max' => "C"];
-        $this->assertEquals($expected, $tcache->getCriterias()->get("f7")->getMinMaxValues($query));
+        $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f7")->getMinMaxValues($query));
 
         $query = $items->createQuery();
         $query->add("f1")->eq(2);
         $actual = $items->getMinMaxValues('f8', $query);
         $expected = ['min' => "D", 'max' => "Y"];
-        $this->assertEquals($expected, $tcache->getCriterias()->get("f8")->getMinMaxValues($query));
+        $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f8")->getMinMaxValues($query));
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
     /**
-     * @expectedException \TCache\Storage\Exception\UndefinedQueryLimitException
+     * @expectedException \Tager\Drivers\Exception\UndefinedQueryLimitException
      */
     public function testQueryWithoutLimit_shouldThrowException()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_BOOL);
-        $tcache->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
-        $tcache->getCriterias()->add("f8")->setValuesType(Corrector::VTYPE_STRING);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_BOOL);
+        $tcache->scheme()->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f8")->setValuesType(Corrector::VTYPE_STRING);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("ItemsTest_testMinMaxWithQuery");
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("ItemsTest_testMinMaxWithQuery"));
 
-        $items = $tcache->getItems();
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
 
         $query = $items->createQuery();
-        $items->getQueryResults($query);
+        $items->getItems($query);
+
+        $tcache->driver()->getDb()->drop();
     }
 
 
     public function testSerializeItemObject()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_BOOL);
-        $tcache->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
-        $tcache->getCriterias()->add("f8")->setValuesType(Corrector::VTYPE_STRING);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_BOOL);
+        $tcache->scheme()->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f8")->setValuesType(Corrector::VTYPE_STRING);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("ItemsTest_testSerializeItemObject");
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("ItemsTest_testSerializeItemObject"));
 
-        $items = $tcache->getItems();
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
 
         $query = $items->createQuery();
         $query->setLimit(1);
-        $res = $items->getQueryResults($query);
+        $res = $items->getItems($query);
 
         $serres = serialize($res);
 
         $this->assertEquals($res, unserialize($serres));
+
+        $tcache->driver()->getDb()->drop();
     }
 }
  

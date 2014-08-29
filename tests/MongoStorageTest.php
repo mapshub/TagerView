@@ -2,57 +2,48 @@
 
 namespace TCacheTest;
 
-use TCache\TCache;
-use TCache\Utils\Corrector;
+use Tager\View;
+use Tager\Helpers\Corrector;
 
 class MongoStorageTest extends \PHPUnit_Framework_TestCase
 {
     /**
-     * @expectedException \TCache\Storage\Exception\UndefinedMongoDbNameException
+     * @expectedException \Tager\Drivers\Exception\UndefinedMongodbCollectionException
      */
     public function testUndefinedMongoDbNameException()
     {
-        $tcache = new TCache();
-        $storage = $tcache->getStorage();
+        $tcache = new View();
+        $storage = $tcache->driver();
         $this->assertNull($storage->getDb()); // $storage->getDb() throws UndefinedMongoDbNameException
-        $storage->dropDb();
     }
 
 
     public function testDefaultCollectionName()
     {
-        $tcache = new TCache();
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest");
-        $this->assertEquals("TCacheTest", $storage->getItemsCollectionName());
-        $defaultCollection = $storage->getItemsCollection();
-        $this->assertNotNull($defaultCollection);
-        $userCollection = $storage->setItemsCollectionName("MongoStorageTest_testDefaultCollectionName")->getItemsCollection();
-        $this->assertNotNull($userCollection);
-        $this->assertNotEquals($defaultCollection->getName(), $userCollection->getName());
+        $tcache = new View();
+        $storage = $tcache->driver();
 
-        $storage->dropDb();
-    }
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("ItemsTest_testDefaultCollectionName"));
 
-    public function testGetItemsCllection()
-    {
-        $tcache = new TCache();
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("MongoStorageTest_testGetItemsCllection");
+        $this->assertEquals("ItemsTest_testDefaultCollectionName", $storage->getItemsCollectionName());
 
-        $storage->dropDb();
+        $storage->getDb()->drop();
     }
 
     public function testSaveItem()
     {
-        $tcache = new TCache();
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("MongoStorageTest_testSaveItem");
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("sex");
-        $tcache->getCriterias()->add("name");
-        $tcache->getCriterias()->add("birthday");
-        $tcache->getCriterias()->add("nicknames", Corrector::VTYPE_STRING, true);
+        $storage = $tcache->driver();
+
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("MongoStorageTest_testSaveItem"));
+
+        $tcache->scheme()->getCriterias()->add("sex");
+        $tcache->scheme()->getCriterias()->add("name");
+        $tcache->scheme()->getCriterias()->add("birthday");
+        $tcache->scheme()->getCriterias()->add("nicknames", Corrector::VTYPE_STRING, true);
 
         $data = [
             'sex' => 'M',
@@ -60,24 +51,26 @@ class MongoStorageTest extends \PHPUnit_Framework_TestCase
             'birthday' => '2014-06-05',
             'nicknames' => 'bubuzzz'
         ];
-        $item = $tcache->getItems()->createItem($data);
-        $saveditem = $tcache->getItems()->saveItem($item);
+        $item = $tcache->items()->createItem($data);
+        $saveditem = $tcache->items()->saveItem($item);
         $this->assertEquals($item, $saveditem);
-        $saveditem = $tcache->getItems()->saveItem($item);
+        $saveditem = $tcache->items()->saveItem($item);
         $this->assertEquals($item, $saveditem);
-        $storage->dropDb();
+        $storage->getDb()->drop();
     }
 
     public function testRemoveItem()
     {
-        $tcache = new TCache();
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("MongoStorageTest_testRemoveItem");
+        $tcache = new View();
+        $storage = $tcache->driver();
 
-        $tcache->getCriterias()->add("sex");
-        $tcache->getCriterias()->add("name");
-        $tcache->getCriterias()->add("birthday");
-        $tcache->getCriterias()->add("nicknames", Corrector::VTYPE_STRING, true);
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("MongoStorageTest_testRemoveItem"));
+
+        $tcache->scheme()->getCriterias()->add("sex");
+        $tcache->scheme()->getCriterias()->add("name");
+        $tcache->scheme()->getCriterias()->add("birthday");
+        $tcache->scheme()->getCriterias()->add("nicknames", Corrector::VTYPE_STRING, true);
 
         $data = [
             'sex' => 'M',
@@ -85,13 +78,12 @@ class MongoStorageTest extends \PHPUnit_Framework_TestCase
             'birthday' => '2014-06-05',
             'nicknames' => 'bubuzzz'
         ];
-        $item = $tcache->getItems()->createItem($data);
-        $saveditem = $tcache->getItems()->saveItem($item);
+        $item = $tcache->items()->createItem($data);
+        $saveditem = $tcache->items()->saveItem($item);
 
-        $tcache->getItems()->removeItem($saveditem);
+        $tcache->items()->removeItem($saveditem);
 
-
-        $storage->dropDb();
+        $storage->getDb()->drop();
     }
 }
  

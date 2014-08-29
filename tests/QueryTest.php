@@ -3,8 +3,8 @@
 namespace TCacheTest;
 
 
-use TCache\TCache;
-use TCache\Utils\Corrector;
+use Tager\View;
+use Tager\Helpers\Corrector;
 
 class QueryTest extends \PHPUnit_Framework_TestCase
 {
@@ -21,20 +21,22 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
     public function testGuestAndSystemModeQuery()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("QueryTest_testGuestAndSystemModeQuery");
+        $storage = $tcache->driver();
 
-        $items = $tcache->getItems();
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("QueryTest_testGuestAndSystemModeQuery"));
+
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
@@ -45,7 +47,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
 
         //меняем конфигурацию немного после добавления - значит валидных данных нестало
-        $tcache->getCriterias()->get('f4')->setValuesType(Corrector::VTYPE_BOOL);
+        $tcache->scheme()->getCriterias()->get('f4')->setValuesType(Corrector::VTYPE_BOOL);
         $this->assertEquals(0, $items->getCount($query));
 
         //меняем query на systemUser
@@ -55,33 +57,35 @@ class QueryTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(0, $items->getCount($query));
 
         //возвращаем конфигурацию
-        $tcache->getCriterias()->get('f4')->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->get('f4')->setValuesType(Corrector::VTYPE_INT);
         $this->assertEquals(6, $items->getCount($query));
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
     public function testQueryDistinctValues()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f7")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("QueryTest_testQueryDistinctValues");
+        $storage = $tcache->driver();
 
-        $items = $tcache->getItems();
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("QueryTest_testQueryDistinctValues"));
+
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
 
-        $values = $tcache->getCriterias()->get('f1')->getDistinctValues($items->createQuery());
+        $values = $tcache->scheme()->getCriterias()->get('f1')->getDistinctValues($items->createQuery());
 
         $actualValues = [];
         foreach ($values as $next) {
@@ -93,7 +97,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
         //tags - true
 
-        $values = $tcache->getCriterias()->get('f7')->getDistinctValues($items->createQuery());
+        $values = $tcache->scheme()->getCriterias()->get('f7')->getDistinctValues($items->createQuery());
 
         $actualValues = [];
         foreach ($values as $next) {
@@ -103,24 +107,26 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($valuesExpected, $actualValues);
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
     public function testQueryBuilder_0()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("QueryTest_testQueryBuilder_0");
+        $storage = $tcache->driver();
 
-        $items = $tcache->getItems();
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("QueryTest_testQueryBuilder_0"));
+
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
@@ -141,25 +147,27 @@ class QueryTest extends \PHPUnit_Framework_TestCase
         $query->setModeOR(true);
         $this->assertArrayHasKey('$or', $query->extract());
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
     public function testQueryBuilder_1()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("f7")->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f7")->setTagsMode(true);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("QueryTest_testQueryBuilder_1");
+        $storage = $tcache->driver();
 
-        $items = $tcache->getItems();
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("QueryTest_testQueryBuilder_1"));
+
+        $items = $tcache->items();
         foreach ($this->data as $data) {
             $items->saveItem($items->createItem($data));
         }
@@ -231,7 +239,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
         $query->add('f7')->size(3);
         $this->assertEquals(1, $items->getCount($query));
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 }
  

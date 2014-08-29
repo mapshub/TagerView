@@ -3,16 +3,16 @@
 namespace TCacheTest;
 
 
-use TCache\TCache;
-use TCache\Utils\Corrector;
+use Tager\View;
+use Tager\Helpers\Corrector;
 
 class CorrectorTest extends \PHPUnit_Framework_TestCase
 {
     public function testINTCorrectValuesMaker()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $int = $tcache->getCriterias()->add("field" . Corrector::VTYPE_INT, Corrector::VTYPE_INT);
+        $int = $tcache->scheme()->getCriterias()->add("field" . Corrector::VTYPE_INT, Corrector::VTYPE_INT);
 
         //TEST INT
         $this->assertInternalType("float", $int->getCorrectValue(9999999999999999));
@@ -44,9 +44,9 @@ class CorrectorTest extends \PHPUnit_Framework_TestCase
 
     public function testBOOLCorrectValuesMaker()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $bool = $tcache->getCriterias()->add("field" . Corrector::VTYPE_BOOL, Corrector::VTYPE_BOOL);
+        $bool = $tcache->scheme()->getCriterias()->add("field" . Corrector::VTYPE_BOOL, Corrector::VTYPE_BOOL);
 
         //TEST BOOL
         $this->assertInternalType("bool", $bool->getCorrectValue(true));
@@ -73,9 +73,9 @@ class CorrectorTest extends \PHPUnit_Framework_TestCase
 
     public function testFloatCorrectValuesMaker()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $float = $tcache->getCriterias()->add("field" . Corrector::VTYPE_FLOAT, Corrector::VTYPE_FLOAT);
+        $float = $tcache->scheme()->getCriterias()->add("field" . Corrector::VTYPE_FLOAT, Corrector::VTYPE_FLOAT);
 
         $this->assertInternalType("float", $float->getCorrectValue(true));
         $this->assertEquals(1.0, $float->getCorrectValue(true));
@@ -92,9 +92,9 @@ class CorrectorTest extends \PHPUnit_Framework_TestCase
 
     public function testStringCorrectValuesMaker()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $string = $tcache->getCriterias()->add("field" . Corrector::VTYPE_STRING, Corrector::VTYPE_STRING);
+        $string = $tcache->scheme()->getCriterias()->add("field" . Corrector::VTYPE_STRING, Corrector::VTYPE_STRING);
 
         $this->assertInternalType("string", $string->getCorrectValue(true));
         $this->assertEquals('1', $string->getCorrectValue(true));
@@ -103,14 +103,14 @@ class CorrectorTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('', $string->getCorrectValue(false));
 
         $this->assertInternalType("string", $string->getCorrectValue(23543.0987654321));
-        $this->assertEquals('23543.098765432', $tcache->getServiceManager()->getNumberFormatter(0, 100)->format(
+        $this->assertEquals('23543.098765432', $tcache->sm()->getNumberFormatter(0, 100)->format(
             $string->getCorrectValue(23543.0987654321)
         ));
-        $s = $tcache->getServiceManager()->getNumberFormatter(0, 100)->format(
+        $s = $tcache->sm()->getNumberFormatter(0, 100)->format(
             $string->getCorrectValue(9999999999999996.88888888888888888)
         );
         $this->assertEquals('9999999999999999.88888888888888888', $s); //TODO: при $s = 10000000000000000 ХЗ как это получается
-        $this->assertEquals('0.000110320343221', $tcache->getServiceManager()->getNumberFormatter(0, 100)->format(
+        $this->assertEquals('0.000110320343221', $tcache->sm()->getNumberFormatter(0, 100)->format(
             $string->getCorrectValue(0.0258963147 - 0.025785994356779)
         ));
 
@@ -118,9 +118,9 @@ class CorrectorTest extends \PHPUnit_Framework_TestCase
 
     public function testTimestampCorrectValuesMaker()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $timestamp = $tcache->getCriterias()->add("field" . Corrector::VTYPE_TIMESTAMP, Corrector::VTYPE_TIMESTAMP);
+        $timestamp = $tcache->scheme()->getCriterias()->add("field" . Corrector::VTYPE_TIMESTAMP, Corrector::VTYPE_TIMESTAMP);
         $tsCur = time();
         /** @var \MongoDate $tsValueCur */
         $tsValueCur = $timestamp->getCorrectValue($tsCur);
@@ -150,14 +150,14 @@ class CorrectorTest extends \PHPUnit_Framework_TestCase
             'favnumbers' => [1982, 1983, 7098, 7, 777, 35]
         ];
 
-        $tcache = new TCache();
-        $tcache->getCriterias()->add("isMan")->setValuesType(Corrector::VTYPE_BOOL);
-        $tcache->getCriterias()->add("birthday")->setValuesType(Corrector::VTYPE_TIMESTAMP);
-        $tcache->getCriterias()->add("weight")->setValuesType(Corrector::VTYPE_INT);
-        $tcache->getCriterias()->add("stars")->setValuesType(Corrector::VTYPE_STRING);
-        $tcache->getCriterias()->add("favnumbers")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache = new View();
+        $tcache->scheme()->getCriterias()->add("isMan")->setValuesType(Corrector::VTYPE_BOOL);
+        $tcache->scheme()->getCriterias()->add("birthday")->setValuesType(Corrector::VTYPE_TIMESTAMP);
+        $tcache->scheme()->getCriterias()->add("weight")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("stars")->setValuesType(Corrector::VTYPE_STRING);
+        $tcache->scheme()->getCriterias()->add("favnumbers")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
 
-        $indexes = $tcache->getCorrector()->getIndexes($data);
+        $indexes = $tcache->sm()->getCorrectorHelper()->getIndexes($data);
         $this->assertInternalType("bool", $indexes['isMan']);
         $this->assertTrue($indexes['isMan']); //true == (bool)"false";
         $this->assertInstanceOf("MongoDate", $indexes['birthday']);

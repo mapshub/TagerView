@@ -2,7 +2,7 @@
 
 namespace TCacheTest;
 
-use TCache\TCache;
+use Tager\View;
 
 class TCacheTest extends \PHPUnit_Framework_TestCase
 {
@@ -39,113 +39,124 @@ class TCacheTest extends \PHPUnit_Framework_TestCase
 
     public function testInstances()
     {
-        $tcache = new TCache();
-        $this->assertInstanceOf('TCache\Storage\MongoStorage', $tcache->getStorage());
-        $this->assertInstanceOf('TCache\Criterias', $tcache->getCriterias());
-        $this->assertInstanceOf('TCache\Items', $tcache->getItems());
-        $this->assertInstanceOf('TCache\Criterias\Criteria', $tcache->getServiceManager()->getCriteria());
-        $this->assertInstanceOf('TCache\Items\Item', $tcache->getServiceManager()->getEmptyItem());
-        $this->assertInstanceOf('TCache\Utils\Hashes', $tcache->getServiceManager()->getHashesUtil());
-        $this->assertInstanceOf('TCache\Utils\Corrector', $tcache->getServiceManager()->getCorrectorUtil());
-        $this->assertInstanceOf('TCache\Utils\Validator', $tcache->getServiceManager()->getValidatorUtil());
-        $this->assertInstanceOf('TCache\Query', $tcache->getServiceManager()->getEmptyQuery());
-        $this->assertInstanceOf('TCache\Query\Field', $tcache->getServiceManager()->getEmptyQueryField());
+        $tcache = new View();
+        $this->assertInstanceOf('Tager\Drivers\MongoStorage', $tcache->driver());
+        $this->assertInstanceOf('Tager\Criterias', $tcache->scheme()->getCriterias());
+        $this->assertInstanceOf('Tager\Items', $tcache->items());
+        $this->assertInstanceOf('Tager\Criterias\Criteria', $tcache->sm()->getCriteria());
+        $this->assertInstanceOf('Tager\Items\Item', $tcache->sm()->getEmptyItem());
+        $this->assertInstanceOf('Tager\Helpers\Hashes', $tcache->sm()->getHashesHelper());
+        $this->assertInstanceOf('Tager\Helpers\Corrector', $tcache->sm()->getCorrectorHelper());
+        $this->assertInstanceOf('Tager\Helpers\Validator', $tcache->sm()->getValidatorHelper());
+        $this->assertInstanceOf('Tager\Queries\Query', $tcache->sm()->getEmptyQuery());
+        $this->assertInstanceOf('Tager\Queries\Field', $tcache->sm()->getEmptyQueryField());
+        $this->assertInstanceOf('Tager\Scheme', $tcache->scheme());
+        $this->assertInstanceOf('Tager\Cache', $tcache->cache());
+        $this->assertInstanceOf('Tager\Cache\Memcache\Memcache', $tcache->cache()->memcache());
+        $this->assertInstanceOf('Tager\Cache\TCache\TagerCacheView', $tcache->cache()->master());
+        $this->assertInstanceOf('Tager\Queries', $tcache->queries());
     }
 
     public function testCriteriaHash()
     {
-        $tcache = new TCache("TCacheTest", "ver2_testLoad"); //TODO: переделать
-        $tcache->getCriterias()->add("name");
-        $tcache->getCriterias()->add("age");
-        $tcache->getCriterias()->add("sex");
-        $hash_1 = $tcache->getHashes()->getConfigHash();
+        $tcache = new View("TCacheTest", "ver2_testLoad"); //TODO: переделать
+        $tcache->scheme()->getCriterias()->add("name");
+        $tcache->scheme()->getCriterias()->add("age");
+        $tcache->scheme()->getCriterias()->add("sex");
+        $hash_1 = $tcache->sm()->getHashesHelper()->getConfigHash();
 
-        $tcache = new TCache("TCacheTest", "ver2_testLoad"); //TODO: переделать
-        $tcache->getCriterias()->add("age");
-        $tcache->getCriterias()->add("sex");
-        $tcache->getCriterias()->add("name");
-        $hash_2 = $tcache->getHashes()->getConfigHash();
+        $tcache = new View("TCacheTest", "ver2_testLoad"); //TODO: переделать
+        $tcache->scheme()->getCriterias()->add("age");
+        $tcache->scheme()->getCriterias()->add("sex");
+        $tcache->scheme()->getCriterias()->add("name");
+        $hash_2 = $tcache->sm()->getHashesHelper()->getConfigHash();
 
         $this->assertEquals($hash_1, $hash_2);
     }
 
     public function testFillItems_1()
     {
-        $tcache = new TCache();
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("TCacheTest_testFillItems_1");
+        $tcache = new View();
+        $storage = $tcache->driver();
+
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("TCacheTest_testFillItems_1"));
 
         foreach ($this->getData() as $arrNextData) {
-            $tcache->getItems()->saveItem(
-                $tcache->getItems()->createItem($arrNextData)
+            $tcache->items()->saveItem(
+                $tcache->items()->createItem($arrNextData)
             );
         }
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
     public function testFillItems_2()
     {
-        $tcache = new TCache();
-        $tcache->getCriterias()->add("Brands")->setTagsMode(true);
-        $tcache->getCriterias()->add("Models")->setTagsMode(true);
-        $tcache->getCriterias()->add("Salons")->setTagsMode(true);
+        $tcache = new View();
+        $tcache->scheme()->getCriterias()->add("Brands")->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("Models")->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("Salons")->setTagsMode(true);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("TCacheTest_testFillItems_2");
+        $storage = $tcache->driver();
+
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("TCacheTest_testFillItems_2"));
 
         $dataList = $this->getData();
 
         $mess = "";
 
         foreach ($dataList as $arrNextData) {
-            $tcache->getItems()->saveItem(
-                $tcache->getItems()->createItem($arrNextData)
+            $tcache->items()->saveItem(
+                $tcache->items()->createItem($arrNextData)
             );
         }
 
-        $selectAll = $tcache->getItems()->createQuery();
+        $selectAll = $tcache->items()->createQuery();
 
-        $this->assertEquals(count($dataList), $tcache->getItems()->getCount($selectAll));
+        $this->assertEquals(count($dataList), $tcache->items()->getCount($selectAll));
 
 
         //изменили конфиг поэтому в БД данные опять добавятся - ненужные должен удалить Демон
-        $tcache->getCriterias()->add("Bodies");
+        $tcache->scheme()->getCriterias()->add("Bodies");
 
         foreach ($dataList as $arrNextData) {
-            $tcache->getItems()->saveItem(
-                $tcache->getItems()->createItem($arrNextData)
+            $tcache->items()->saveItem(
+                $tcache->items()->createItem($arrNextData)
             );
         }
 
-        $this->assertEquals(count($dataList), $tcache->getItems()->getCount($selectAll));
+        $this->assertEquals(count($dataList), $tcache->items()->getCount($selectAll));
 
         //In sysmode count = N*2
-        $query = $tcache->getItems()->createQuery();
+        $query = $tcache->items()->createQuery();
         $query->setSystemUserQuery(true);
-        $this->assertEquals(count($dataList) * 2, $tcache->getItems()->getCount($query));
+        $this->assertEquals(count($dataList) * 2, $tcache->items()->getCount($query));
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 
 
     public function testFillItems_3()
     {
-        $tcache = new TCache();
-        $tcache->getCriterias()->add("Brands")->setTagsMode(true);
-        $tcache->getCriterias()->add("Models")->setTagsMode(true);
-        $tcache->getCriterias()->add("Salons")->setTagsMode(true);
+        $tcache = new View();
+        $tcache->scheme()->getCriterias()->add("Brands")->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("Models")->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("Salons")->setTagsMode(true);
 
-        $storage = $tcache->getStorage();
-        $storage->setDbName("TCacheTest")->setItemsCollectionName("TCacheTest_testFillItems_3");
+        $storage = $tcache->driver();
+
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("TCacheTest_testFillItems_3"));
 
         $dataList = $this->getData();
 
         foreach ($dataList as $arrNextData) {
-            $tcache->getItems()->saveItem(
-                $tcache->getItems()->createItem($arrNextData)
+            $tcache->items()->saveItem(
+                $tcache->items()->createItem($arrNextData)
             );
         }
 
-        $tcache->getStorage()->dropDb();
+        $tcache->driver()->getDb()->drop();
     }
 }

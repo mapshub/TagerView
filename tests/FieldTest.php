@@ -2,18 +2,18 @@
 
 namespace TCacheTest;
 
-use TCache\TCache;
-use TCache\Utils\Corrector;
+use Tager\View;
+use Tager\Helpers\Corrector;
 
 class FieldTest extends \PHPUnit_Framework_TestCase
 {
     public function testQueryBuilder_0()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_TIMESTAMP);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_TIMESTAMP);
 
-        $items = $tcache->getItems();
+        $items = $tcache->items();
 
         $query = $items->createQuery();
 
@@ -42,11 +42,11 @@ class FieldTest extends \PHPUnit_Framework_TestCase
 
     public function testQueryBuilder_size()
     {
-        $tcache = new TCache();
+        $tcache = new View();
 
-        $tcache->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_STRING)->setTagsMode(true);
 
-        $items = $tcache->getItems();
+        $items = $tcache->items();
 
         $query = $items->createQuery();
         $condition = $query->add('f1')->size(3);
