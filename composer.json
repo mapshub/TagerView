@@ -1,5 +1,5 @@
 {
-    "name": "Tager/Cache",
+    "name": "Tager/View",
     "description": "Library that provides data aggregation and indexing with mongodb and fast search with aggregation framework usage",
     "keywords": ["cache", "caching", "storage", "mongo", "fast", "search", "indexing", "aggregation", "aggregate"],
     "homepage": "https://github.com/mapshub/Tager",
