@@ -80,12 +80,4 @@ class Items
     {
         return $this->cache->driver()->getMinMaxValues($field, $query, $unwind);
     }
-
-    /**
-     * @return Query
-     */
-    public function createQuery()
-    {
-        return $this->cache->driver()->createQuery();
-    }
 }

@@ -15,7 +15,7 @@ class FieldTest extends \PHPUnit_Framework_TestCase
 
         $items = $tcache->items();
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
 
         $arg = time();
         $argCor = $query->add('f1')->eq($arg)->extract();
@@ -48,7 +48,7 @@ class FieldTest extends \PHPUnit_Framework_TestCase
 
         $items = $tcache->items();
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $condition = $query->add('f1')->size(3);
         $correctedArg = $condition->extract();
         $this->assertTrue(isset($correctedArg['f1']));

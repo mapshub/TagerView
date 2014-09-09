@@ -40,7 +40,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
             $items->saveItem($items->createItem($data));
         }
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add("f2")->lte(10);
         $subquery = $query->subquery()->setModeOR(true);
         $subquery->add('f7')->all(['C']);
@@ -97,7 +97,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
         ];
 
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->addSort("f5", 1);
         $query->setLimit(1000);
 
@@ -134,7 +134,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $expected = ['H', 'N', 'Y'];
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f5')->gt(1);
         $query->add('f5')->lt(8);
         $query->setSkip(1);
@@ -173,7 +173,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
             $items->saveItem($items->createItem($data));
         }
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $actual = $items->getMinMaxValues('f1', $query);
         $expected = ['min' => 0, 'max' => 7];
         $this->assertEquals($expected, $actual);
@@ -185,18 +185,18 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($expected, $actual);
         $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f1")->getMinMaxValues($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $actual = $items->getMinMaxValues('f6', $query);
         $expected = ['min' => false, 'max' => true];
         $this->assertEquals($expected, $actual);
         $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f6")->getMinMaxValues($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $actual = $items->getMinMaxValues('f7', $query, true);
         $expected = ['min' => "A", 'max' => "C"];
         $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f7")->getMinMaxValues($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add("f1")->eq(2);
         $actual = $items->getMinMaxValues('f8', $query);
         $expected = ['min' => "D", 'max' => "Y"];
@@ -229,7 +229,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
             $items->saveItem($items->createItem($data));
         }
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $items->getItems($query);
 
         $tcache->driver()->getDb()->drop();
@@ -257,7 +257,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
             $items->saveItem($items->createItem($data));
         }
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->setLimit(1);
         $res = $items->getItems($query);
 

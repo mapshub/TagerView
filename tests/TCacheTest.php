@@ -112,7 +112,7 @@ class TCacheTest extends \PHPUnit_Framework_TestCase
             );
         }
 
-        $selectAll = $tcache->items()->createQuery();
+        $selectAll = $tcache->queries()->create();
 
         $this->assertEquals(count($dataList), $tcache->items()->getCount($selectAll));
 
@@ -129,7 +129,7 @@ class TCacheTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals(count($dataList), $tcache->items()->getCount($selectAll));
 
         //In sysmode count = N*2
-        $query = $tcache->items()->createQuery();
+        $query = $tcache->queries()->create();
         $query->setSystemUserQuery(true);
         $this->assertEquals(count($dataList) * 2, $tcache->items()->getCount($query));
 

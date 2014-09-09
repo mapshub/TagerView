@@ -41,7 +41,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
             $items->saveItem($items->createItem($data));
         }
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f7')->in(['B', 'C']);
         $this->assertEquals(6, $items->getCount($query));
 
@@ -85,7 +85,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
             $items->saveItem($items->createItem($data));
         }
 
-        $values = $tcache->scheme()->getCriterias()->get('f1')->getDistinctValues($items->createQuery());
+        $values = $tcache->scheme()->getCriterias()->get('f1')->getDistinctValues($tcache->queries()->create());
 
         $actualValues = [];
         foreach ($values as $next) {
@@ -97,7 +97,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
         //tags - true
 
-        $values = $tcache->scheme()->getCriterias()->get('f7')->getDistinctValues($items->createQuery());
+        $values = $tcache->scheme()->getCriterias()->get('f7')->getDistinctValues($tcache->queries()->create());
 
         $actualValues = [];
         foreach ($values as $next) {
@@ -131,7 +131,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
             $items->saveItem($items->createItem($data));
         }
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f2')->eq(0);
         //guest mode
         $query->setModeOR(false);
@@ -173,7 +173,7 @@ class QueryTest extends \PHPUnit_Framework_TestCase
         }
 
         //LIKE: (f2=0 AND (f1=0 OR f5=0))
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f2')->eq(0);
         $subquery = $query->subquery();
         $subquery->add('f1')->eq(0);
@@ -181,61 +181,61 @@ class QueryTest extends \PHPUnit_Framework_TestCase
         $subquery->setModeOR(true);
         $this->assertEquals(2, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f2')->ne(0);
         $this->assertEquals(5, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f3')->in(['4', '5', '6']);
         $this->assertEquals(3, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f3')->notin(['4', '5', '6']);
         $this->assertEquals(4, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f4')->gt(' 6 ');
         $this->assertEquals(3, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f4')->gte(' 6 ');
         $this->assertEquals(5, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f1')->lt(0);
         $this->assertEquals(0, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f1')->lte(0);
         $this->assertEquals(2, $items->getCount($query));
 
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f6')->eq(true);
         $this->assertEquals(3, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f6')->ne(true);
         $this->assertEquals(4, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f6')->ne(true);
         $query->add('f6')->exists(true);
         $this->assertEquals(1, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f7')->all(['A', 'B']);
         $this->assertEquals(2, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f7')->all(['C', 'B', 'A']);
         $this->assertEquals(1, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f7')->in(['A', 'B']);
         $this->assertEquals(6, $items->getCount($query));
 
-        $query = $items->createQuery();
+        $query = $tcache->queries()->create();
         $query->add('f7')->size(3);
         $this->assertEquals(1, $items->getCount($query));
 
