@@ -16,7 +16,7 @@ class Corrector
     const VTYPE_TIMESTAMP = "timestamp";
 
     /** @var View */
-    private $cache = null;
+    protected $cache = null;
     private $formatter = null;
     private $locale = null;
 

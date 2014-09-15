@@ -9,7 +9,7 @@ use Tager\View;
 class Validator
 {
     /** @var View */
-    private $cache = null;
+    protected $cache = null;
 
     function __construct($cache)
     {
