@@ -37,7 +37,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $items = $tcache->items();
         foreach ($this->data as $data) {
-            $items->saveItem($items->createItem($data));
+            $items->save($items->createWithData($data));
         }
 
         $query = $tcache->queries()->create();
@@ -50,16 +50,16 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $query->setLimit(1000);
 
-        $result = $items->getItems($query);
+        $result = $tcache->queries()->findDocuments($query);
 
         $this->assertEquals(5, count($result));
 
         $query->setLimit(1);
-        $this->assertEquals(1, count($items->getItems($query)));
+        $this->assertEquals(1, count($tcache->queries()->findDocuments($query)));
 
         $subquery->setModeOR(false);
 
-        $c = count($items->getItems($query));
+        $c = count($tcache->queries()->findDocuments($query));
         $this->assertEquals(1, $c);
 
         $tcache->driver()->getDb()->drop();
@@ -83,7 +83,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $items = $tcache->items();
         foreach ($this->data as $data) {
-            $items->saveItem($items->createItem($data));
+            $items->save($items->createWithData($data));
         }
 
         $expected = [
@@ -102,8 +102,8 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
         $query->setLimit(1000);
 
         $actual = [];
-        foreach ($items->getItems($query) as $next) {
-            $actual[] = $items->createItem()->load($next)->getData();
+        foreach ($tcache->queries()->findDocuments($query) as $next) {
+            $actual[] = $items->createWithData()->load($next)->getData();
         }
 
         $this->assertEquals($expected, $actual);
@@ -129,7 +129,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $items = $tcache->items();
         foreach ($this->data as $data) {
-            $items->saveItem($items->createItem($data));
+            $items->save($items->createWithData($data));
         }
 
         $expected = ['H', 'N', 'Y'];
@@ -142,7 +142,7 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
 
         $actual = [];
-        foreach ($items->getDistinctValues('f8', $query) as $next) {
+        foreach ($tcache->queries()->findDistinctValues('f8', $query) as $next) {
             $actual[] = $next['value'];
         }
 
@@ -170,35 +170,35 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $items = $tcache->items();
         foreach ($this->data as $data) {
-            $items->saveItem($items->createItem($data));
+            $items->save($items->createWithData($data));
         }
 
         $query = $tcache->queries()->create();
-        $actual = $items->getMinMaxValues('f1', $query);
+        $actual = $tcache->queries()->findMinMaxValues('f1', $query);
         $expected = ['min' => 0, 'max' => 7];
         $this->assertEquals($expected, $actual);
         $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f1")->getMinMaxValues($query));
 
         $query->add('f6')->eq(true);
-        $actual = $items->getMinMaxValues('f1', $query);
+        $actual = $tcache->queries()->findMinMaxValues('f1', $query);
         $expected = ['min' => 0, 'max' => 5];
         $this->assertEquals($expected, $actual);
         $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f1")->getMinMaxValues($query));
 
         $query = $tcache->queries()->create();
-        $actual = $items->getMinMaxValues('f6', $query);
+        $actual = $tcache->queries()->findMinMaxValues('f6', $query);
         $expected = ['min' => false, 'max' => true];
         $this->assertEquals($expected, $actual);
         $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f6")->getMinMaxValues($query));
 
         $query = $tcache->queries()->create();
-        $actual = $items->getMinMaxValues('f7', $query, true);
+        $actual = $tcache->queries()->findMinMaxValues('f7', $query, true);
         $expected = ['min' => "A", 'max' => "C"];
         $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f7")->getMinMaxValues($query));
 
         $query = $tcache->queries()->create();
         $query->add("f1")->eq(2);
-        $actual = $items->getMinMaxValues('f8', $query);
+        $actual = $tcache->queries()->findMinMaxValues('f8', $query);
         $expected = ['min' => "D", 'max' => "Y"];
         $this->assertEquals($expected, $tcache->scheme()->getCriterias()->get("f8")->getMinMaxValues($query));
 
@@ -226,11 +226,11 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $items = $tcache->items();
         foreach ($this->data as $data) {
-            $items->saveItem($items->createItem($data));
+            $items->save($items->createWithData($data));
         }
 
         $query = $tcache->queries()->create();
-        $items->getItems($query);
+        $tcache->queries()->findDocuments($query);
 
         $tcache->driver()->getDb()->drop();
     }
@@ -254,12 +254,12 @@ class ItemsTest extends \PHPUnit_Framework_TestCase
 
         $items = $tcache->items();
         foreach ($this->data as $data) {
-            $items->saveItem($items->createItem($data));
+            $items->save($items->createWithData($data));
         }
 
         $query = $tcache->queries()->create();
         $query->setLimit(1);
-        $res = $items->getItems($query);
+        $res = $tcache->queries()->findDocuments($query);
 
         $serres = serialize($res);
 

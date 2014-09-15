@@ -235,7 +235,7 @@ class ServiceManager
     /**
      * @return Item
      */
-    public function getEmptyItem()
+    public function createBlankItem()
     {
         $item = null;
         if (!is_null($this->itemClass)) {

@@ -37,8 +37,8 @@ class TagerCacheView extends View implements ICache
             'userData' => $arrData,
         ];
 
-        $this->items()->saveItem(
-            $this->items()->createItem($arrData)
+        $this->items()->save(
+            $this->items()->createWithData($arrData)
         );
     }
 
@@ -52,7 +52,7 @@ class TagerCacheView extends View implements ICache
         $query->add("userQueryName")->eq($queryName);
         $query->setLimit(1);
 
-        $arrayItems = $this->items()->getItems($query);
+        $arrayItems = $this->queries()->findDocuments($query);
         if (isset($arrayItems[0], $arrayItems[0]['TcData'])) {
             $result = $arrayItems[0]['TcData']['userData'];
         }

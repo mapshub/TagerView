@@ -11,13 +11,13 @@ class ItemTest extends \PHPUnit_Framework_TestCase
     {
         $tcache = new View();
 
-        $this->assertEquals(false, $tcache->sm()->getEmptyItem()->setData(true));
-        $this->assertEquals(false, $tcache->sm()->getEmptyItem()->setData([]));
+        $this->assertEquals(false, $tcache->sm()->createBlankItem()->setData(true));
+        $this->assertEquals(false, $tcache->sm()->createBlankItem()->setData([]));
 
-        $this->assertEquals($item = $tcache->sm()->getEmptyItem(), $item = $tcache->sm()->getEmptyItem());
+        $this->assertEquals($item = $tcache->sm()->createBlankItem(), $item = $tcache->sm()->createBlankItem());
 
         $data = ['data' => 'test', 'mode' => [0, 1]];
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $this->assertInstanceOf('Tager\Items\Item', $item->setData($data));
 
         $this->assertEquals($data, $item->getData());
@@ -37,7 +37,7 @@ class ItemTest extends \PHPUnit_Framework_TestCase
     public function testLoadData()
     {
         $tcache = new View();
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
 
         $mongoDate = new \MongoDate();
         $objectHash = md5("");
@@ -102,13 +102,13 @@ class ItemTest extends \PHPUnit_Framework_TestCase
             "TcConfigHash" => ""
         ];
 
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->setData($data);
         $this->assertEquals($data, $item->getData());
 
         $objectToLoad = $object;
         $objectToLoad['_id'] = "";
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->load($objectToLoad);
         $this->assertEquals($data, $item->getData());
         $this->assertEquals($data, $item->extract()['TcData']);
@@ -128,12 +128,12 @@ class ItemTest extends \PHPUnit_Framework_TestCase
             "TcDatetimeUpdated" => $mongoDate,
             "TcConfigHash" => ""
         ];
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->load($object);
         $this->assertEquals($object, $item->getLoadedData());
         $this->assertArrayNotHasKey("_id", $item->extract());
 
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $res = $item->load($data); //not valid db object load
         $this->assertFalse($res);
         $this->assertEquals(null, $item->getLoadedData());
@@ -160,7 +160,7 @@ class ItemTest extends \PHPUnit_Framework_TestCase
 
         //нет критериев - нет полей индекса в объекте
 
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->setData($data);
         $arrIndexes = $tcache->sm()->getCorrectorHelper()->getIndexes($item->getData());
         $TcDataHash = $tcache->sm()->getHashesHelper()->getArrayHash($item->getData());
@@ -173,7 +173,7 @@ class ItemTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals($object, $objectActual);
 
 
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->load($objectSource);
         $arrIndexes = $tcache->sm()->getCorrectorHelper()->getIndexes($item->getData());
         $TcDataHash = $tcache->sm()->getHashesHelper()->getArrayHash($item->getData());
@@ -185,12 +185,12 @@ class ItemTest extends \PHPUnit_Framework_TestCase
         $object['TcDatetimeUpdated'] = $objectActual['TcDatetimeUpdated'];
         $this->assertEquals($object, $objectActual);
 
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->load($data); //not valid object
         $this->assertNull($item->extract());
 
         $tcache->scheme()->getCriterias()->add("sex"); //добавили критерий
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->setData($data);
         $arrIndexes = $tcache->sm()->getCorrectorHelper()->getIndexes($item->getData());
         $TcDataHash = $tcache->sm()->getHashesHelper()->getArrayHash($item->getData());
@@ -220,11 +220,11 @@ class ItemTest extends \PHPUnit_Framework_TestCase
             "TcDatetimeUpdated" => $mongoDate,
             "TcConfigHash" => ""
         ];
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->setData($data);
         $this->assertEquals(date("Y-m-d H:i"), date("Y-m-d H:i", $item->getDatetimeCreatedTs()));
 
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->load($object);
         $this->assertEquals($mongoDate->sec, $item->getDatetimeCreatedTs());
     }
@@ -243,11 +243,11 @@ class ItemTest extends \PHPUnit_Framework_TestCase
             "TcDatetimeUpdated" => $mongoDate,
             "TcConfigHash" => ""
         ];
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->setData($data);
         $this->assertEquals(date("Y-m-d H:i"), date("Y-m-d H:i", $item->getDatetimeUpdatedTs()));
 
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->load($object);
         $this->assertEquals($mongoDate->sec, $item->getDatetimeUpdatedTs());
     }
@@ -266,7 +266,7 @@ class ItemTest extends \PHPUnit_Framework_TestCase
             "TcDatetimeUpdated" => $mongoDate,
             "TcConfigHash" => ""
         ];
-        $item = $tcache->sm()->getEmptyItem();
+        $item = $tcache->sm()->createBlankItem();
         $item->load($object);
         $newTimestamp = mktime(22, 55, 03, 5, 11, 1982);
         $item->setDatetimeUpdatedTs($newTimestamp);

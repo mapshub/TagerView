@@ -44,7 +44,7 @@ class TCacheTest extends \PHPUnit_Framework_TestCase
         $this->assertInstanceOf('Tager\Criterias', $tcache->scheme()->getCriterias());
         $this->assertInstanceOf('Tager\Items', $tcache->items());
         $this->assertInstanceOf('Tager\Criterias\Criteria', $tcache->sm()->getCriteria());
-        $this->assertInstanceOf('Tager\Items\Item', $tcache->sm()->getEmptyItem());
+        $this->assertInstanceOf('Tager\Items\Item', $tcache->sm()->createBlankItem());
         $this->assertInstanceOf('Tager\Helpers\Hashes', $tcache->sm()->getHashesHelper());
         $this->assertInstanceOf('Tager\Helpers\Corrector', $tcache->sm()->getCorrectorHelper());
         $this->assertInstanceOf('Tager\Helpers\Validator', $tcache->sm()->getValidatorHelper());
@@ -83,8 +83,8 @@ class TCacheTest extends \PHPUnit_Framework_TestCase
         $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("TCacheTest_testFillItems_1"));
 
         foreach ($this->getData() as $arrNextData) {
-            $tcache->items()->saveItem(
-                $tcache->items()->createItem($arrNextData)
+            $tcache->items()->save(
+                $tcache->items()->createWithData($arrNextData)
             );
         }
         $tcache->driver()->getDb()->drop();
@@ -107,31 +107,31 @@ class TCacheTest extends \PHPUnit_Framework_TestCase
         $mess = "";
 
         foreach ($dataList as $arrNextData) {
-            $tcache->items()->saveItem(
-                $tcache->items()->createItem($arrNextData)
+            $tcache->items()->save(
+                $tcache->items()->createWithData($arrNextData)
             );
         }
 
         $selectAll = $tcache->queries()->create();
 
-        $this->assertEquals(count($dataList), $tcache->items()->getCount($selectAll));
+        $this->assertEquals(count($dataList), $tcache->queries()->findCount($selectAll));
 
 
         //изменили конфиг поэтому в БД данные опять добавятся - ненужные должен удалить Демон
         $tcache->scheme()->getCriterias()->add("Bodies");
 
         foreach ($dataList as $arrNextData) {
-            $tcache->items()->saveItem(
-                $tcache->items()->createItem($arrNextData)
+            $tcache->items()->save(
+                $tcache->items()->createWithData($arrNextData)
             );
         }
 
-        $this->assertEquals(count($dataList), $tcache->items()->getCount($selectAll));
+        $this->assertEquals(count($dataList), $tcache->queries()->findCount($selectAll));
 
         //In sysmode count = N*2
         $query = $tcache->queries()->create();
         $query->setSystemUserQuery(true);
-        $this->assertEquals(count($dataList) * 2, $tcache->items()->getCount($query));
+        $this->assertEquals(count($dataList) * 2, $tcache->queries()->findCount($query));
 
         $tcache->driver()->getDb()->drop();
     }
@@ -152,8 +152,8 @@ class TCacheTest extends \PHPUnit_Framework_TestCase
         $dataList = $this->getData();
 
         foreach ($dataList as $arrNextData) {
-            $tcache->items()->saveItem(
-                $tcache->items()->createItem($arrNextData)
+            $tcache->items()->save(
+                $tcache->items()->createWithData($arrNextData)
             );
         }
 

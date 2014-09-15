@@ -51,10 +51,10 @@ class MongoStorageTest extends \PHPUnit_Framework_TestCase
             'birthday' => '2014-06-05',
             'nicknames' => 'bubuzzz'
         ];
-        $item = $tcache->items()->createItem($data);
-        $saveditem = $tcache->items()->saveItem($item);
+        $item = $tcache->items()->createWithData($data);
+        $saveditem = $tcache->items()->save($item);
         $this->assertEquals($item, $saveditem);
-        $saveditem = $tcache->items()->saveItem($item);
+        $saveditem = $tcache->items()->save($item);
         $this->assertEquals($item, $saveditem);
         $storage->getDb()->drop();
     }
@@ -78,8 +78,8 @@ class MongoStorageTest extends \PHPUnit_Framework_TestCase
             'birthday' => '2014-06-05',
             'nicknames' => 'bubuzzz'
         ];
-        $item = $tcache->items()->createItem($data);
-        $saveditem = $tcache->items()->saveItem($item);
+        $item = $tcache->items()->createWithData($data);
+        $saveditem = $tcache->items()->save($item);
 
         $tcache->items()->removeItem($saveditem);
 

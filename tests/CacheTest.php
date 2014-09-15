@@ -62,7 +62,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
         $query = $view->queries()->create();
         $query->add('f1')->in([1, 0, 2]);
 
-        $count = $view->items()->getCount($query);
+        $count = $view->queries()->findCount($query);
         $this->assertEquals(0, $count);
 
         $masterCount = $view->cache()->master()->cacheGetItemsCount($view->sm()->getHashesHelper()->getConfigHash(), $query->getHash());
@@ -72,13 +72,13 @@ class CacheTest extends PHPUnit_Framework_TestCase
         $this->assertEquals($count, $memcacheCount);
 
         foreach ($this->data as $itemData) {
-            $item = $view->items()->createItem($itemData);
-            $view->items()->saveItem($item);
+            $item = $view->items()->createWithData($itemData);
+            $view->items()->save($item);
         }
 
         $view->cache()->invalidate();
 
-        $count = $view->items()->getCount($query);
+        $count = $view->queries()->findCount($query);
         $this->assertEquals(5, $count);
 
         $masterCount = $view->cache()->master()->cacheGetItemsCount($view->sm()->getHashesHelper()->getConfigHash(), $query->getHash());
@@ -127,7 +127,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
         $query->add('f1')->in([1, 0, 2]);
         $query->setLimit(100);
 
-        $actual = $resultBuilder($view->items()->getItems($query));
+        $actual = $resultBuilder($view->queries()->findDocuments($query));
         $this->assertEquals([], $actual);
 
         $masterActual = $view->cache()->master()->cacheGetItems($view->sm()->getHashesHelper()->getConfigHash(), $query->getHash());
@@ -137,13 +137,13 @@ class CacheTest extends PHPUnit_Framework_TestCase
         $this->assertEquals([], $memcacheActulal);
 
         foreach ($this->data as $itemData) {
-            $item = $view->items()->createItem($itemData);
-            $view->items()->saveItem($item);
+            $item = $view->items()->createWithData($itemData);
+            $view->items()->save($item);
         }
 
         $view->cache()->invalidate();
 
-        $actual = $resultBuilder($view->items()->getItems($query));
+        $actual = $resultBuilder($view->queries()->findDocuments($query));
         $this->assertEquals($expected, $actual);
 
         $masterActual = $resultBuilder($view->cache()->master()->cacheGetItems($view->sm()->getHashesHelper()->getConfigHash(), $query->getHash()));
@@ -184,7 +184,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
         $queryHash = $view->sm()->getHashesHelper()->getAggregationQueryHash('f1', $query, false);
 
-        $actual = $view->items()->getDistinctValues('f1', $query);
+        $actual = $view->queries()->findDistinctValues('f1', $query);
         $this->assertEquals([], $actual);
 
         $masterActual = $view->cache()->master()->cacheGetDistinctValues($view->sm()->getHashesHelper()->getConfigHash(), $queryHash);
@@ -195,13 +195,13 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
 
         foreach ($this->data as $itemData) {
-            $item = $view->items()->createItem($itemData);
-            $view->items()->saveItem($item);
+            $item = $view->items()->createWithData($itemData);
+            $view->items()->save($item);
         }
 
         $view->cache()->invalidate();
 
-        $actual = $view->items()->getDistinctValues('f1', $query);
+        $actual = $view->queries()->findDistinctValues('f1', $query);
         $this->assertEquals($expected, $actual);
 
         $masterActual = $view->cache()->master()->cacheGetDistinctValues($view->sm()->getHashesHelper()->getConfigHash(), $queryHash);
@@ -238,7 +238,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
         $queryHash = $view->sm()->getHashesHelper()->getAggregationQueryHash('f1', $query, false);
 
-        $actual = $view->items()->getMinMaxValues('f1', $query);
+        $actual = $view->queries()->findMinMaxValues('f1', $query);
         $this->assertEquals([], $actual);
 
         $masterActual = $view->cache()->master()->cacheGetMinMaxValues($view->sm()->getHashesHelper()->getConfigHash(), $queryHash);
@@ -251,13 +251,13 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
 
         foreach ($this->data as $itemData) {
-            $item = $view->items()->createItem($itemData);
-            $view->items()->saveItem($item);
+            $item = $view->items()->createWithData($itemData);
+            $view->items()->save($item);
         }
 
         $view->cache()->invalidate();
 
-        $actual = $view->items()->getMinMaxValues('f1', $query);
+        $actual = $view->queries()->findMinMaxValues('f1', $query);
         $this->assertEquals($expected, $actual);
 
         $masterActual = $view->cache()->master()->cacheGetMinMaxValues($view->sm()->getHashesHelper()->getConfigHash(), $queryHash);

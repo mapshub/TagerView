@@ -47,10 +47,13 @@ class Item
                 $this->data['TcData'] = $userData;
                 $this->data['TcDataHash'] = $dataHash;
                 $this->data['TcObjectHash'] = ""; //TcObjectHash устанавливается в extract
-                $this->data['TcDatetimeCreated'] = $time;
-                $this->data['TcDatetimeUpdated'] = $time;
                 $this->data['TcConfigHash'] = ""; //TcConfigHash устанавливается в extract
+                $this->data['TcDatetimeUpdated'] = $time;
                 $this->isValid = true;
+            }
+
+            if (false === $this->getObjectIsLoaded() || !($this->data['TcDatetimeCreated'] instanceof \MongoDate)) {
+                $this->data['TcDatetimeCreated'] = $time;
             }
         }
         return $this->isValid === true ? $this : false;
@@ -133,6 +136,14 @@ class Item
             return $c->sec;
         }
         return null;
+    }
+
+    public function setDatetimeCreatedTs($timestamp)
+    {
+        if ($this->isValid) {
+            $newMongoDate = $this->cache->sm()->getCorrectorHelper()->getCorrectValue($timestamp, Corrector::VTYPE_TIMESTAMP);
+            $this->data['TcDatetimeCreated'] = $newMongoDate;
+        }
     }
 
     public function getDatetimeUpdatedTs()
