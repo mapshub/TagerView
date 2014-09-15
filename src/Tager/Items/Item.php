@@ -39,9 +39,16 @@ class Item
     {
         $this->isValid = false;
         $this->data = [];
+        $time = new \MongoDate();
+        if (false !== $this->getObjectIsLoaded() && $this->loadedData['TcDatetimeCreated'] instanceof \MongoDate) {
+            $this->data['TcDatetimeCreated'] = $this->loadedData['TcDatetimeCreated'];
+        } else {
+            $this->data['TcDatetimeCreated'] = $time;
+        }
+
         if (is_array($userData) && !empty($userData)) {
             $dataHash = $this->cache->sm()->getHashesHelper()->getArrayHash($userData);
-            $time = new \MongoDate();
+
 
             if (!is_null($dataHash)) {
                 $this->data['TcData'] = $userData;
@@ -50,10 +57,6 @@ class Item
                 $this->data['TcConfigHash'] = ""; //TcConfigHash устанавливается в extract
                 $this->data['TcDatetimeUpdated'] = $time;
                 $this->isValid = true;
-            }
-
-            if (false === $this->getObjectIsLoaded() || !($this->data['TcDatetimeCreated'] instanceof \MongoDate)) {
-                $this->data['TcDatetimeCreated'] = $time;
             }
         }
         return $this->isValid === true ? $this : false;
