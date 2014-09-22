@@ -241,5 +241,75 @@ class QueryTest extends \PHPUnit_Framework_TestCase
 
         $tcache->driver()->getDb()->drop();
     }
+
+
+    public function testQueryBuilder_2()
+    {
+        $tcache = new View();
+
+        $tcache->scheme()->getCriterias()->add("f1")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f2")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f3")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f4")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f5")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f6")->setValuesType(Corrector::VTYPE_INT);
+        $tcache->scheme()->getCriterias()->add("f7")->setTagsMode(true);
+
+        $storage = $tcache->driver();
+
+        $mongoClient = new \MongoClient();
+        $tcache->driver()->connectTo($mongoClient->selectDB("TCacheTest")->selectCollection("QueryTest_testQueryBuilder_2"));
+
+        $arrYears = [];
+
+        $items = $tcache->items();
+        foreach ($this->data as $data) {
+            $year = rand(1982, 2014);
+            $arrYears[] = $year;
+            $ts = date(mktime(0, 0, 0, 1, 1, $year));
+            $item = $items->createWithData($data);
+            $item->setDatetimeCreatedTs($ts);
+            $item->setDatetimeUpdatedTs($ts);
+            $items->save($item);
+        }
+
+        $qr = $tcache->queries()->create();
+        $qr->setLimit(10000);
+        $documents = $tcache->queries()->findDocuments($qr);
+
+        $i=0;
+        foreach ($documents as $nextDocument) {
+            $item = $tcache->items()->createWithDocument($nextDocument);
+            $year = date("Y", $item->getDatetimeCreatedTs());
+            $this->assertEquals($arrYears[$i], $year);
+            $i++;
+        }
+
+        sort($arrYears);
+        $qrSortAsc = $tcache->queries()->create();
+        $qrSortAsc->setLimit(10000);
+        $qrSortAsc->addSortByCreatedDate(1);
+        $documents = $tcache->queries()->findDocuments($qrSortAsc);
+        $i=0;
+        foreach ($documents as $nextDocument) {
+            $item = $tcache->items()->createWithDocument($nextDocument);
+            $year = date("Y", $item->getDatetimeCreatedTs());
+            $this->assertEquals($arrYears[$i], $year);
+            $i++;
+        }
+
+        rsort($arrYears);
+        $qrSortDesc = $tcache->queries()->create();
+        $qrSortDesc->setLimit(10000);
+        $qrSortDesc->addSortByUpdatedDate(-1);
+        $documents = $tcache->queries()->findDocuments($qrSortDesc);
+        $i=0;
+        foreach ($documents as $nextDocument) {
+            $item = $tcache->items()->createWithDocument($nextDocument);
+            $year = date("Y", $item->getDatetimeCreatedTs());
+            $this->assertEquals($arrYears[$i], $year);
+            $i++;
+        }
+    }
 }
  

@@ -8,6 +8,13 @@ use Tager\Helpers\Corrector;
 
 class Item
 {
+    const TcData = "TcData";
+    const TcDataHash = "TcDataHash";
+    const TcObjectHash = "TcObjectHash";
+    const TcDatetimeCreated = "TcDatetimeCreated";
+    const TcDatetimeUpdated = "TcDatetimeUpdated";
+    const TcConfigHash = "TcConfigHash";
+
     /** @var View */
     protected $cache = null;
 
@@ -18,12 +25,12 @@ class Item
     protected $objectIsLoaded = false;
 
     protected $data = [
-        'TcData' => [],
-        'TcDataHash' => "",
-        'TcObjectHash' => "",
-        'TcDatetimeCreated' => null,
-        'TcDatetimeUpdated' => null,
-        'TcConfigHash' => "",
+        self::TcData => [],
+        self::TcDataHash => "",
+        self::TcObjectHash => "",
+        self::TcDatetimeCreated => null,
+        self::TcDatetimeUpdated => null,
+        self::TcConfigHash => "",
     ];
 
     function __construct($cache)
@@ -40,10 +47,10 @@ class Item
         $this->isValid = false;
         $this->data = [];
         $time = new \MongoDate();
-        if (false !== $this->getObjectIsLoaded() && $this->loadedData['TcDatetimeCreated'] instanceof \MongoDate) {
-            $this->data['TcDatetimeCreated'] = $this->loadedData['TcDatetimeCreated'];
+        if (false !== $this->getObjectIsLoaded() && $this->loadedData[self::TcDatetimeCreated] instanceof \MongoDate) {
+            $this->data[self::TcDatetimeCreated] = $this->loadedData[self::TcDatetimeCreated];
         } else {
-            $this->data['TcDatetimeCreated'] = $time;
+            $this->data[self::TcDatetimeCreated] = $time;
         }
 
         if (is_array($userData) && !empty($userData)) {
@@ -51,11 +58,11 @@ class Item
 
 
             if (!is_null($dataHash)) {
-                $this->data['TcData'] = $userData;
-                $this->data['TcDataHash'] = $dataHash;
-                $this->data['TcObjectHash'] = ""; //TcObjectHash устанавливается в extract
-                $this->data['TcConfigHash'] = ""; //TcConfigHash устанавливается в extract
-                $this->data['TcDatetimeUpdated'] = $time;
+                $this->data[self::TcData] = $userData;
+                $this->data[self::TcDataHash] = $dataHash;
+                $this->data[self::TcObjectHash] = ""; //TcObjectHash устанавливается в extract
+                $this->data[self::TcConfigHash] = ""; //TcConfigHash устанавливается в extract
+                $this->data[self::TcDatetimeUpdated] = $time;
                 $this->isValid = true;
             }
         }
@@ -72,18 +79,18 @@ class Item
         $this->objectIsLoaded = false;
         $this->loadedData = null;
         $this->data = [];
-        if (isset($source['TcData'], $source['TcDataHash'], $source['TcObjectHash'], $source['TcDatetimeCreated'], $source['TcDatetimeUpdated'], $source['TcConfigHash'])) {
+        if (isset($source[self::TcData], $source[self::TcDataHash], $source[self::TcObjectHash], $source[self::TcDatetimeCreated], $source[self::TcDatetimeUpdated], $source[self::TcConfigHash])) {
 
-            if ($source['TcDatetimeCreated'] instanceof \MongoDate && $source['TcDatetimeUpdated'] instanceof \MongoDate) {
-                if (is_array($source['TcData'])) {
-                    if ($this->cache->sm()->getHashesHelper()->getArrayHash($source['TcData']) === $source['TcDataHash']) {
+            if ($source[self::TcDatetimeCreated] instanceof \MongoDate && $source[self::TcDatetimeUpdated] instanceof \MongoDate) {
+                if (is_array($source[self::TcData])) {
+                    if ($this->cache->sm()->getHashesHelper()->getArrayHash($source[self::TcData]) === $source[self::TcDataHash]) {
 
-                        $this->data['TcData'] = $source['TcData'];
-                        $this->data['TcDataHash'] = $source['TcDataHash'];
-                        $this->data['TcObjectHash'] = $source['TcObjectHash'];
-                        $this->data['TcDatetimeCreated'] = $source['TcDatetimeCreated'];
-                        $this->data['TcDatetimeUpdated'] = $source['TcDatetimeUpdated'];
-                        $this->data['TcConfigHash'] = $source['TcConfigHash'];
+                        $this->data[self::TcData] = $source[self::TcData];
+                        $this->data[self::TcDataHash] = $source[self::TcDataHash];
+                        $this->data[self::TcObjectHash] = $source[self::TcObjectHash];
+                        $this->data[self::TcDatetimeCreated] = $source[self::TcDatetimeCreated];
+                        $this->data[self::TcDatetimeUpdated] = $source[self::TcDatetimeUpdated];
+                        $this->data[self::TcConfigHash] = $source[self::TcConfigHash];
 
                         $this->isValid = true;
                         $this->objectIsLoaded = true;
@@ -100,7 +107,7 @@ class Item
      */
     public function getData()
     {
-        return $this->data['TcData'];
+        return $this->data[self::TcData];
     }
 
     /**
@@ -120,8 +127,8 @@ class Item
         if ($this->isValid) {
             if (false !== $this->cache->sm()->getValidatorHelper()->validateItem($this)) {
                 $indexes = $this->cache->sm()->getCorrectorHelper()->getIndexes($this->getData());
-                $dbObject['TcObjectHash'] = $this->cache->sm()->getHashesHelper()->getObjectHash($indexes, $dbObject['TcDataHash']);
-                $dbObject['TcConfigHash'] = $this->cache->sm()->getHashesHelper()->getConfigHash();
+                $dbObject[self::TcObjectHash] = $this->cache->sm()->getHashesHelper()->getObjectHash($indexes, $dbObject[self::TcDataHash]);
+                $dbObject[self::TcConfigHash] = $this->cache->sm()->getHashesHelper()->getConfigHash();
                 foreach ($indexes as $key => $value) {
                     $dbObject[$key] = $value;
                 }
@@ -135,7 +142,7 @@ class Item
     {
         if ($this->isValid) {
             /** @var \MongoDate $c */
-            $c = $this->data['TcDatetimeCreated'];
+            $c = $this->data[self::TcDatetimeCreated];
             return $c->sec;
         }
         return null;
@@ -145,7 +152,7 @@ class Item
     {
         if ($this->isValid) {
             $newMongoDate = $this->cache->sm()->getCorrectorHelper()->getCorrectValue($timestamp, Corrector::VTYPE_TIMESTAMP);
-            $this->data['TcDatetimeCreated'] = $newMongoDate;
+            $this->data[self::TcDatetimeCreated] = $newMongoDate;
         }
     }
 
@@ -153,7 +160,7 @@ class Item
     {
         if ($this->isValid) {
             /** @var \MongoDate $u */
-            $u = $this->data['TcDatetimeUpdated'];
+            $u = $this->data[self::TcDatetimeUpdated];
             return $u->sec;
         }
         return null;
@@ -163,7 +170,7 @@ class Item
     {
         if ($this->isValid) {
             $newMongoDate = $this->cache->sm()->getCorrectorHelper()->getCorrectValue($timestamp, Corrector::VTYPE_TIMESTAMP);
-            $this->data['TcDatetimeUpdated'] = $newMongoDate;
+            $this->data[self::TcDatetimeUpdated] = $newMongoDate;
         }
     }
 

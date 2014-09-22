@@ -3,6 +3,7 @@
 namespace Tager\Queries;
 
 use Tager\Criterias\Criteria;
+use Tager\Items\Item;
 use Tager\Queries\Field;
 use Tager\Helpers\Corrector;
 use Tager\View;
@@ -102,6 +103,16 @@ class Query
     public function getSort()
     {
         return $this->order;
+    }
+
+    public function addSortByCreatedDate($dir)
+    {
+        $this->addSort(Item::TcDatetimeCreated, $dir);
+    }
+
+    public function addSortByUpdatedDate($dir)
+    {
+        $this->addSort(Item::TcDatetimeUpdated, $dir);
     }
 
     public function resetSort()
