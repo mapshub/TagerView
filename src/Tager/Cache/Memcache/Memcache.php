@@ -26,18 +26,15 @@ class Memcache implements ICache
     public function __construct($cache)
     {
         $this->cache = $cache;
-        $this->memcache = new \Memcache();
     }
 
-    public function connectTo($host = "localhost", $port = 11211)
+    public function connectTo($memcache)
     {
-        $this->setHost($host);
-        $this->setPort($port);
-        if (false === $this->connected) {
-            $this->connected = @$this->memcache->connect($host, $port);
-            if (false === $this->connected) {
-                throw new MemcacheConnectFailException();
-            }
+        if (!($memcache instanceof \Memcache)) {
+            throw new MemcacheConnectFailException("Memcache only");
+        } else {
+            $this->memcache = $memcache;
+            $this->connected = true;
         }
         return $this;
     }

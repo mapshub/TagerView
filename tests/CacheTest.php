@@ -15,6 +15,9 @@ class CacheTest extends PHPUnit_Framework_TestCase
     public function testCache_1()
     {
 
+        $memcacheServer = new Memcache();
+        $memcacheServer->connect("localhost", 11211);
+
         $mongoClient = new \MongoClient();
         $mongoDb = $mongoClient->selectDB("TCacheTest");
         $itemsCollection = $mongoDb->selectCollection("CacheTest_testCache_1");
@@ -31,7 +34,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
         $this->assertFalse($fastCache->isConnected());
 
         $slowCache->driver()->connectTo($cacheCollection);
-        $fastCache->connectTo("localhost", 11211);
+        $fastCache->connectTo($memcacheServer);
 
         $this->assertTrue($slowCache->isConnected());
         $this->assertTrue($fastCache->isConnected());
@@ -47,6 +50,9 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
     public function testItemsCount()
     {
+        $memcacheServer = new Memcache();
+        $memcacheServer->connect("localhost", 11211);
+
         $mongoClient = new \MongoClient();
         $mongoDb = $mongoClient->selectDB("TCacheTest");
         $itemsCollection = $mongoDb->selectCollection("CacheTest_testItemsCount");
@@ -57,7 +63,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
         $view->driver()->connectTo($itemsCollection);
         $view->cache()->master()->driver()->connectTo($cacheCollection);
-        $view->cache()->memcache()->connectTo("localhost", 11211);
+        $view->cache()->memcache()->connectTo($memcacheServer);
 
         $query = $view->queries()->create();
         $query->add('f1')->in([1, 0, 2]);
@@ -93,6 +99,9 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
     public function testItemsSelect()
     {
+        $memcacheServer = new Memcache();
+        $memcacheServer->connect("localhost", 11211);
+
         $mongoClient = new \MongoClient();
         $mongoDb = $mongoClient->selectDB("TCacheTest");
         $itemsCollection = $mongoDb->selectCollection("CacheTest_testItemsSelect");
@@ -103,7 +112,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
         $view->driver()->connectTo($itemsCollection);
         $view->cache()->master()->driver()->connectTo($cacheCollection);
-        $view->cache()->memcache()->connectTo("localhost", 11211);
+        $view->cache()->memcache()->connectTo($memcacheServer);
 
         //
         $expected = [
@@ -158,6 +167,9 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
     public function testDistinctValues()
     {
+        $memcacheServer = new Memcache();
+        $memcacheServer->connect("localhost", 11211);
+
         $mongoClient = new \MongoClient();
         $mongoDb = $mongoClient->selectDB("TCacheTest");
         $itemsCollection = $mongoDb->selectCollection("CacheTest_testDistinctValues");
@@ -169,7 +181,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
         $view->driver()->connectTo($itemsCollection);
         $view->cache()->master()->driver()->connectTo($cacheCollection);
-        $view->cache()->memcache()->connectTo("localhost", 11211);
+        $view->cache()->memcache()->connectTo($memcacheServer);
 
         //
         $expected = [
@@ -216,6 +228,10 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
     public function testMinMaxValues()
     {
+
+        $memcacheServer = new Memcache();
+        $memcacheServer->connect("localhost", 11211);
+
         $mongoClient = new \MongoClient();
         $mongoDb = $mongoClient->selectDB("TCacheTest");
         $itemsCollection = $mongoDb->selectCollection("CacheTest_testMinMaxValues");
@@ -227,7 +243,7 @@ class CacheTest extends PHPUnit_Framework_TestCase
 
         $view->driver()->connectTo($itemsCollection);
         $view->cache()->master()->driver()->connectTo($cacheCollection);
-        $view->cache()->memcache()->connectTo("localhost", 11211);
+        $view->cache()->memcache()->connectTo($memcacheServer);
 
         //
         $expected = ['min' => 0, 'max' => 2];

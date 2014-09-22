@@ -27,14 +27,18 @@ class MemcacheTest extends PHPUnit_Framework_TestCase
     public function testConnect()
     {
         $tcache = new \Tager\View();
-        $tcache->cache()->memcache()->connectTo();
+        $memcache = new Memcache();
+        $memcache->connect("localhost", 11211);
+        $tcache->cache()->memcache()->connectTo($memcache);
         $this->assertTrue($tcache->cache()->memcache()->isConnected());
     }
 
     public function testSetData()
     {
         $tcache = new \Tager\View();
-        $memcache = $tcache->cache()->memcache()->connectTo();
+        $memcacheServer = new Memcache();
+        $memcacheServer->connect("localhost", 11211);
+        $memcache = $tcache->cache()->memcache()->connectTo($memcacheServer);
 
         $memcacheActual = new Memcache();
         $memcacheActual->connect("localhost", 11211);
@@ -57,7 +61,9 @@ class MemcacheTest extends PHPUnit_Framework_TestCase
     public function testGetData()
     {
         $tcache = new \Tager\View();
-        $memcache = $tcache->cache()->memcache()->connectTo();
+        $memcacheServer = new Memcache();
+        $memcacheServer->connect("localhost", 11211);
+        $memcache = $tcache->cache()->memcache()->connectTo($memcacheServer);
 
         $expectedValue = new stdClass();
         $expectedValue->arr = [0, 1, 2, 3];
@@ -66,7 +72,9 @@ class MemcacheTest extends PHPUnit_Framework_TestCase
         $memcache->setData("tager-test-set-get", $expectedValue);
 
         $tcache2 = new \Tager\View();
-        $actualValue = $tcache2->cache()->memcache()->connectTo()->getData("tager-test-set-get");
+        $memcacheServer = new Memcache();
+        $memcacheServer->connect("localhost", 11211);
+        $actualValue = $tcache2->cache()->memcache()->connectTo($memcacheServer)->getData("tager-test-set-get");
 
         $this->assertEquals($expectedValue, $actualValue);
     }
