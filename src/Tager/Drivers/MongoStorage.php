@@ -182,7 +182,7 @@ class MongoStorage
 
         $queryHash = $query->getHash();
         $configHash = $this->cache->sm()->getHashesHelper()->getConfigHash();
-        $result = $this->cache->cache()->cacheGetItemsCount($configHash, $queryHash);
+        $result = $this->cache->cache()->cacheGetItems($configHash, $queryHash);
 
         if (false === $result) {
 
