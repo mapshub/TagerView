@@ -54,6 +54,19 @@ class MongoStorage
             if (is_null($extracted)) {
                 $this->removeItem($item);
             } else {
+
+                if ($item->getObjectIsLoaded()) {
+                    $loadedDocument = $item->getLoadedData();
+                    if ($loadedDocument['TcObjectHash'] !== $extracted['TcObjectHash']) {
+                        $this->getItemsCollection()->remove(
+                            [
+                                'TcObjectHash' => $loadedDocument['TcObjectHash'],
+                                'TcConfigHash' => $loadedDocument['TcConfigHash']
+                            ]
+                        );
+                    }
+                }
+
                 $result = $this->getItemsCollection()->update(
                     [
                         'TcObjectHash' => $extracted['TcObjectHash'],
