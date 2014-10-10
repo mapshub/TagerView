@@ -71,7 +71,9 @@ class TagerCacheView extends View implements ICache
 
     public function invalidate()
     {
-        $this->driver()->getItemsCollection()->remove([]);
+        if ($this->driver()->isConnected()) {
+            $this->driver()->getItemsCollection()->remove([]);
+        }
     }
 
     public function cacheSetItemsCount($configHash, $queryHash, $count)
