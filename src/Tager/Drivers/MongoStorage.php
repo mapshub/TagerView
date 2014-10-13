@@ -205,6 +205,11 @@ class MongoStorage
                 ['$match' => $where]
             ];
 
+            $sort = $query->getSort();
+            if (!empty($sort)) {
+                array_push($ops, ['$sort' => $sort]);
+            }
+
             if (($skip = $query->getSkip()) > 0) {
                 array_push($ops, ['$skip' => $skip]);
             }
@@ -213,11 +218,6 @@ class MongoStorage
                 array_push($ops, ['$limit' => $limit]);
             } else {
                 throw new UndefinedQueryLimitException();
-            }
-
-            $sort = $query->getSort();
-            if (!empty($sort)) {
-                array_push($ops, ['$sort' => $sort]);
             }
 
             $res = $this->getItemsCollection()->aggregate($ops);
